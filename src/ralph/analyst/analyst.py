@@ -1,5 +1,5 @@
 import yaml
-
+import json
 
 class BaseAnalyst:
     """
@@ -26,7 +26,7 @@ class BaseAnalyst:
                     "The Analyst requires a configuration file or a configuration dictionary"
                 )
 
-    def parse_config(self, config_path):
+    def parse_config(self, config_path=None, config_dict=None):
         """
         Either parses the file or a dictionary with configuration and
         returns it as a dictionary.
@@ -43,8 +43,18 @@ class BaseAnalyst:
         """
 
         try:
-            with open(config_path, "r") as file:
-                event_config = yaml.safe_load(file)
+            if config_path is not None:
+                file_format = config_path.split(".")[-1]
+
+                if file_format == "yaml":
+                    with open(config_path, "r") as file:
+                        event_config = yaml.safe_load(file)
+                elif file_format == "json":
+                    with open(config_path, "r") as file:
+                        event_config = json.load(file)
+                        file.close()
+            elif config_dict is not None:
+                event_config = config_dict
 
             config = {
                 "event_name": event_config.get("event_name"),

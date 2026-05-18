@@ -1,5 +1,6 @@
 import json
 import time
+import os
 
 import numpy as np
 
@@ -185,9 +186,10 @@ class FitAnalyst(BaseAnalyst):
                 for key in use_boundaries:
                     boundaries[key] = use_boundaries.get(key, boundaries.get(key))
 
-            self.log.debug(f"Fit Analyst: Set up: boundaries:")
-            for key in boundaries:
-                self.log.debug(f"{key}: {boundaries[key]}\n")
+            if boundaries is not None:
+                self.log.debug(f"Fit Analyst: Set up: boundaries:")
+                for key in boundaries:
+                    self.log.debug(f"{key}: {boundaries[key]}\n")
 
             fitting_args = fit_config.get("fitting_method_args", None)
 
@@ -222,9 +224,6 @@ class FitAnalyst(BaseAnalyst):
             self.log.debug(f"Fit Analyst: Set up: fitting package: pyLIMA, "
                            f"fitting method: TRF."
                            )
-            self.log.debug(f"Fit Analyst: Set up: boundaries:")
-            for key in use_boundaries:
-                self.log.debug(f"{key}: {use_boundaries[key]}\n")
 
             fit_pspl = pylima.fit_pylima.FitPylima(self.log)
             results = fit_pspl.fit_pspl(
@@ -272,7 +271,7 @@ class FitAnalyst(BaseAnalyst):
         self.log.info("Fit Analyst: Performing PSPL fit without blend and parallax.")
         results = self.fit_pspl(
             "PSPL_no_blend_no_piE",
-            self.analyst_path + "PSPL_no_blend_no_piE",
+            os.path.join(self.analyst_path, "PSPL_no_blend_no_piE"),
             starting_params,
             False,
             False,
@@ -341,7 +340,7 @@ class FitAnalyst(BaseAnalyst):
         self.log.info("Fit Analyst: Performing PSPL fit.")
         results = self.fit_pspl(
             "PSPL_blend_no_piE",
-            self.analyst_path + "PSPL_blend_no_piE",
+            os.path.join(self.analyst_path, "PSPL_blend_no_piE"),
             starting_params,
             False,
             True,
@@ -356,7 +355,7 @@ class FitAnalyst(BaseAnalyst):
         self.log.info("Fit Analyst: Using default fitting setup.")
         results = self.fit_pspl(
             "PSPL_blend_piE",
-            self.analyst_path + "PSPL_blend_piE",
+            os.path.join(self.analyst_path, "PSPL_blend_piE"),
             starting_params,
             True,
             True,
@@ -404,7 +403,7 @@ class FitAnalyst(BaseAnalyst):
         self.log.info("Fit Analyst:Performing PSPL with blend fit.")
         results = self.fit_pspl(
             "PSPL_blend_no_piE",
-            self.analyst_path + "PSPL_blend_no_piE",
+            os.path.join(self.analyst_path, "PSPL_blend_no_piE"),
             starting_params,
             False,
             True,
@@ -433,7 +432,7 @@ class FitAnalyst(BaseAnalyst):
         }
         results = self.fit_pspl(
             "PSPL_blend_piE",
-            self.analyst_path + "PSPL_blend_piE_" + sign,
+            os.path.join(self.analyst_path, "PSPL_blend_piE_" + sign),
             starting_params,
             True,
             True,

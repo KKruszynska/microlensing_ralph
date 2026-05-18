@@ -214,7 +214,6 @@ class EventAnalyst(BaseAnalyst):
         """
 
         self.log.info("Event Analyst: Processing started.")
-
         if "lc_analyst" in self.config:
             self.run_lc_analyst()
 

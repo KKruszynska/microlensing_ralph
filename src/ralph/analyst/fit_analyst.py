@@ -63,8 +63,10 @@ class FitAnalyst(BaseAnalyst):
             - `PSPL_blend_piE` - point source-point lens model with blending and
                 microlensing parallax effect;
         For each model the User can specify following keywords:
-            - `fitting_package` - str, name of the fitting package supported by `ralph`;
+            - `fitting_package` - str, name of the fitting package supported by `ralph`,
+                available options: pyLIMA;
             - `fitting_method` - str, type of fitting method supported by the `fitting_package` and `ralph`;
+                available options: TRF, DE;
             - `boundaries` - dict, a dictionary containing a list of keywords, and a list with two
                 elements, a lower and upper limit for the given parameter:
                 `key: [lower_limit, upper_limit]`

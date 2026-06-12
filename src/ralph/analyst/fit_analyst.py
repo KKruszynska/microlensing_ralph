@@ -39,11 +39,11 @@ class FitAnalyst(BaseAnalyst):
     ------------------------------
     The configuration dictionary can contain the following keywords:
 
-    * `ongoing_magnification_thershold`: float
+    * `ongoing_magnification_threshold`: float
         Threshold for magnification. If current magnification of the source is larger
         than the threshold, the event is considered as ongoing.
         Default value: 1.05
-    * `ongoing_amplitude_thershold`: float
+    * `ongoing_amplitude_threshold`: float
         Threshold for amplitude. If current amplitude of the event is above the threshold,
         the event is considered as ongoing.
         Default value: 1.0
@@ -113,10 +113,10 @@ class FitAnalyst(BaseAnalyst):
 
         self.log.debug("Fit Analyst: Reading fit config.")
 
-        self.config["ongoing_magnification_thershold"] = config["fit_analyst"].get(
-            "ongoing_magnification_thershold", 1.05
+        self.config["ongoing_magnification_threshold"] = config["fit_analyst"].get(
+            "ongoing_magnification_threshold", 1.05
         )
-        self.config["ongoing_amplitude_thershold"] = config["fit_analyst"].get(
+        self.config["ongoing_amplitude_threshold"] = config["fit_analyst"].get(
             "ongoing_amplitude_thershold", 1.0
         )
 
@@ -189,7 +189,7 @@ class FitAnalyst(BaseAnalyst):
                     boundaries[key] = use_boundaries.get(key, boundaries.get(key))
 
             if boundaries is not None:
-                self.log.debug(f"Fit Analyst: Set up: boundaries:")
+                self.log.debug("Fit Analyst: Set up: boundaries:")
                 for key in boundaries:
                     self.log.debug(f"{key}: {boundaries[key]}\n")
 
@@ -223,8 +223,8 @@ class FitAnalyst(BaseAnalyst):
                     )
         else:
             self.log.info("Fit Analyst: Using default fitting setup.")
-            self.log.debug(f"Fit Analyst: Set up: fitting package: pyLIMA, "
-                           f"fitting method: TRF."
+            self.log.debug("Fit Analyst: Set up: fitting package: pyLIMA, "
+                           "fitting method: TRF."
                            )
 
             fit_pspl = pylima.fit_pylima.FitPylima(self.log)
@@ -297,11 +297,11 @@ class FitAnalyst(BaseAnalyst):
         #  flowchart though.
 
         ongoing_ampl, t_last = analyst_tools.check_ongoing_amplitude(
-            self.config["ongoing_amplitude_thershold"], aligned_data, residuals, baseline_mag
+            self.config["ongoing_amplitude_threshold"], aligned_data, residuals, baseline_mag
         )
         ongoing_time = analyst_tools.check_ongoing_time(fit_params_pspl_nopar, t_last)
         ongoing_mag = analyst_tools.check_ongoing_magnification(
-            self.config["ongoing_magnification_thershold"], fit_params_pspl_nopar, t_last
+            self.config["ongoing_magnification_threshold"], fit_params_pspl_nopar, t_last
         )
         self.log.debug(f"Fit Analyst: Time of the last data point: {t_last}")
         self.log.debug(

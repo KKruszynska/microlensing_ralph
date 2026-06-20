@@ -117,15 +117,14 @@ class Controller:
 
         return config
 
-    def run_parallel_analyst(self, command):
+    @staticmethod
+    def run_parallel_analyst(command):
         """
         Run a single analyst as a subprocess.
 
         :param command: A command to be executed by subprocess.
-        :type command: string
+        :type command: list
         """
-        self.log.info("About to start subprocess for event: ")
-        self.log.info(f"Command: {command[:-2]}")
         subprocess.run(command, shell=False)
 
     def launch_analysts(self):
@@ -178,13 +177,12 @@ class Controller:
             self.log.info(f"Controller: Group_processing_limit set to {max_cores}")
         else:
             max_workers = self.config["group_processing_limit"]
-            
-        with RalphPoolExecutor(max_workers=max_workers) as executor:
+
+        with RalphPoolExecutor(max_workers=max_workers, logger=self.log) as executor:
             self.log.debug("Controller: New process spawned.")
-            executor.map(self.run_parallel_analyst, commands)
-            # for result in executor.map(run_parallel_analyst, commands):
-            #     print(result)
-            # print(futures.result())
+            list(executor.map(self.run_parallel_analyst, commands))
 
         self.log.info("Controller: Processing finished.")
         logs.close_log(self.log)
+
+

@@ -11,12 +11,16 @@
 Ralph is a Python software package that will help you model multiple gravitational microlensing events at once. 
 It can pre-process light curves, find best fitting models, and create color-magnitude diagrams. 
 It can analyze several events in parallel, to optimize the compute time, and can support different microlensing modeling
-packages. 
-Currently, only [pyLIMA](https://github.com/ebachelet/pyLIMA) is supported.
+packages.
+* Currently, only [pyLIMA](https://github.com/ebachelet/pyLIMA) is supported.
 
-To start, please check the Installation Guide, and the Set-Up Tutorial. 
+## Getting started
 
-You can look up the Documentation here. 
+To start, please check [the Installation Guide](https://microlensingralph.readthedocs.io/en/latest/guide_install.html), 
+and [the Set-Up Tutorial](https://microlensingralph.readthedocs.io/en/latest/notebooks/controller_setup.html). 
+
+You can look up the [documentation]https://microlensingralph.readthedocs.io/en/latest/index.html). Let us know if there
+are any missing sections!
 
 If you run into any issues, [please create 
 an Issue through GitHub](https://github.com/KKruszynska/ralph/issues).

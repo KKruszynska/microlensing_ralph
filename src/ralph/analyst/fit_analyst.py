@@ -42,15 +42,20 @@ class FitAnalyst(BaseAnalyst):
     * `ongoing_magnification_threshold`: float
         Threshold for magnification. If current magnification of the source is larger
         than the threshold, the event is considered as ongoing.
-        Default value: 1.05
+        Default value: `1.05`
     * `ongoing_amplitude_threshold`: float
         Threshold for amplitude. If current amplitude of the event is above the threshold,
         the event is considered as ongoing.
-        Default value: 1.0
+        Default value: `1.0`
     * `time_of_peak_bin_size`: float, in days
         Size of the bin used when binning the light curve data to look for the first
         approximation of the time of peak.
-        Default value: 2.0
+        Default value: `2.0`
+    * `return_all_models`: bool
+        If `True`, `Ralph` will return plots, model parameters, and (optionally) CMDs for all
+        found models. Otherwise, if `False` it will return only best fitting model according
+        to the :meth:`ralph.analyst.fit_analyst.FitAnalyst.evaluate_models`.
+        Default value: `True`
     * `model_fit_configuration`: dictionary
         A dictionary with configuration for specific types of models.
         Allowed models keywords are:
@@ -122,6 +127,10 @@ class FitAnalyst(BaseAnalyst):
 
         self.config["top_bin_size"] = config["fit_analyst"].get(
             "time_of_peak_bin_size", 2.0
+        )
+
+        self.config["return_all_models"] = config["fit_analyst"].get(
+            "return_all_models", True
         )
 
         params = {}
@@ -502,11 +511,32 @@ class FitAnalyst(BaseAnalyst):
 
         return fit_ok
 
+    def evaluate_models(self):
+        """
+        Evaluate all found models according to their chi-squared
+        over degrees-of-freedom (`red_chi2`). Model with the lowest
+        value is selected as best and its key is returned.
+
+        :return: return the key for the best model
+        """
+        best_model_name = ""
+
+        lowest_chi2dof = np.inf
+        for model in self.best_results:
+            chi2dof = self.best_results[model]['red_chi2']
+            if chi2dof < lowest_chi2dof:
+                lowest_chi2dof = chi2dof
+                best_model_name = model
+
+        return best_model_name
+
     def perform_fit(self):
         """
         Perform fitting procedures according to the flowchart found in here [link link link].
 
-        :return: A dictionary with all found best-fitting solutions for all tested models.
+        :return: If `config["fit_analyst"]["return_all_models"]` is `True`, return a dictionary
+            with all found best-fitting solutions for all tested models. Otherwise, return
+            a dictionary only with the best fitting model.
         :rtype: dict
         """
 
@@ -545,51 +575,51 @@ class FitAnalyst(BaseAnalyst):
                     f"t0={params['t0']:.2f}, u0={params['u0']:.2f}, tE={params['tE']:.2f}, \n"
                 )
 
-        # Save results
-        self.log.debug("Fit Analyst: Saving results.")
-        # Save results to a file
-        file_name = self.analyst_path + "fit_results.json"
-        with open(file_name, "w", encoding="utf-8") as file:
-            json.dump(self.best_results, file, ensure_ascii=False, indent=4)
-        self.log.debug(f"Fit Analyst: Results saved to {file_name:s}.")
+        # Find best fitting model
+        self.log.debug("Fit Analyst: Find best-fitting model.")
+        self.best_model = self.evaluate_models()
+        self.log.info(f"Fit Analyst: Best fitting model: {self.best_model}")
 
         # Save best results statistics
         file_name = self.analyst_path + "fit_stats.txt"
         with open(file_name, "w", encoding="utf-8") as file:
             file.write(
-                f"{'# name':<20s} : {'chi2':<7s} {'red_chi2':<7s}"
-                f"{'SW':<7s} {'AD':<7s} {'KS':<7s} {'AIC':<7s} {'BIC':<7s}\n"
+                f"{'# name':<20s} : {'chi2':<9s} {'red_chi2':<9s}"
+                f"{'SW':<9s} {'AD':<9s} {'KS':<9s} {'AIC':<9s} {'BIC':<9s}\n"
             )
-            file.write("#--------------------------------------------------------------------------------\n")
+            file.write("#------------------------------------------------------------------------------------------\n")
             for model in self.best_results:
                 params = self.best_results[model]
                 file.write(
-                    f"{model:20s} : {params['chi2']:7.2f} {params['red_chi2']:7.2f}"
-                    f"{params['sw_test']:7.2f} {params['ad_test']:7.2f} {params['ks_test']:7.2f}"
-                    f"{params['aic_test']:7.2f} {params['bic_test']:7.2f}\n"
+                    f"{model:20s} : {params['chi2']:9.2f} {params['red_chi2']:9.2f}"
+                    f"{params['sw_test']:9.2f} {params['ad_test']:9.2f} {params['ks_test']:9.2f}"
+                    f"{params['aic_test']:9.2f} {params['bic_test']:9.2f}\n"
                 )
 
-        # Find best fitting model
-        self.log.debug("Fit Analyst: Find best-fitting model.")
-        bf_model = self.evaluate_model()
-        self.log.info(f"Fit Analyst: Best fitting model: {bf_model}")
-        self.best_model = self.best_results[bf_model]
+        if self.config["return_all_models"]:
+            # Save results
+            self.log.debug("Fit Analyst: Saving results for all models.")
+            # Save results to a file
+            file_name = self.analyst_path + "fit_results.json"
+            self.best_results["best_fitting_model"] = self.best_model
+            with open(file_name, "w", encoding="utf-8") as file:
+                json.dump(self.best_results, file, ensure_ascii=False, indent=4)
+            self.log.debug(f"Fit Analyst: Results saved to {file_name:s}.")
 
-        return self.best_results
+            return self.best_results
+        else:
+            # Save results for the best model only
+            self.log.debug("Fit Analyst: Saving results for the best-fitting model only.")
+            print("=============================================")
+            print(self.best_model)
+            # print(self.best_results[self.best_model])
+            dict_to_save = {
+                self.best_model: self.best_results[self.best_model]
+            }
+            # Save results to a file
+            file_name = self.analyst_path + "fit_results.json"
+            with open(file_name, "w", encoding="utf-8") as file:
+                json.dump(dict_to_save, file, ensure_ascii=False, indent=4)
+            self.log.debug(f"Fit Analyst: Results saved to {file_name:s}.")
 
-    def evaluate_model(self):
-        """
-        Evaluate all found models.
-
-        :return: return the key for the best model
-        """
-        best_model_name = ""
-
-        lowest_chi2dof = np.inf
-        for model in self.best_results:
-            chi2dof = self.best_results[model]['red_chi2']
-            if chi2dof < lowest_chi2dof:
-                lowest_chi2dof = chi2dof
-                best_model_name = model
-
-        return best_model_name
+            return dict_to_save

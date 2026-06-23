@@ -16,6 +16,7 @@ scenario_gaia = {
     "fit_analyst": {
         "ongoing_magnification_threshold": 1.10,
         "ongoing_amplitude_threshold": 1.0,
+        "return_all_models": True,
         "model_fit_configuration": {
             "PSPL_no_blend_no_piE": {
                 "fitting_package": "pyLIMA",
@@ -93,6 +94,7 @@ scenario_gsa = {
     "fit_analyst": {
         "ongoing_magnification_threshold": 1.10,
         "ongoing_amplitude_threshold": 1.0,
+        "return_all_models": True,
         "model_fit_configuration": {
             "PSPL_no_blend_no_piE": {
                 "fitting_package": "pyLIMA",
@@ -158,6 +160,11 @@ scenario_gsa = {
     "fit_result": "tests/ralph/data/input/test_results/gaia24amo_fit_results.json",
 }
 
+scenario_best_only = scenario_gaia
+scenario_best_only["fit_analyst"]["return_all_models"] = False
+scenario_best_only["fit_result"] = None
+scenario_best_only["best_model_key"] = "PSPL_blend_piE_n"
+
 
 class FitAnalystTest:
     """
@@ -167,22 +174,19 @@ class FitAnalystTest:
     def __init__(self, scenario):
         self.scenario = scenario
 
-    def test_parse_config(self):
-        """
-        Test if parsing configuration file works.
-        """
-
+    def setup(self):
         config = {
             "event_name": self.scenario.get("event_name"),
             "ra": self.scenario.get("ra"),
             "dec": self.scenario.get("dec"),
-            }
+        }
 
         fit_params = self.scenario.get("fit_analyst")
 
         config["fit_analyst"] = {
             "ongoing_magnification_threshold": fit_params.get("ongoing_magnification_threshold"),
             "ongoing_amplitude_threshold": fit_params.get("ongoing_amplitude_threshold"),
+            "return_all_models": fit_params.get("return_all_models"),
         }
 
         model_params = fit_params.get("model_fit_configuration")
@@ -192,7 +196,6 @@ class FitAnalystTest:
         config["fit_analyst"]["model_fit_configuration"] = params
 
         config["light_curves"] = self.scenario.get("light_curves")
-
 
         path_outputs = self.scenario.get("analyst_path")
 
@@ -218,6 +221,15 @@ class FitAnalystTest:
                 }
             )
 
+        return path_outputs, config, light_curves
+
+    def test_parse_config(self):
+        """
+        Test if parsing configuration file works.
+        """
+
+        path_outputs, config, light_curves = self.setup()
+        fit_params = self.scenario.get("fit_analyst")
 
         log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], stream=True)
         analyst = FitAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
@@ -241,51 +253,7 @@ class FitAnalystTest:
         Check if testing for an ongoing event works.
         """
 
-        config = {
-            "event_name": self.scenario.get("event_name"),
-            "ra": self.scenario.get("ra"),
-            "dec": self.scenario.get("dec"),
-            }
-
-        fit_params = self.scenario.get("fit_analyst")
-
-        config["fit_analyst"] = {
-            "ongoing_magnification_thereshold": fit_params.get("ongoing_magnification_threshold"),
-            "ongoing_amplitude_threshold": fit_params.get("ongoing_amplitude_threshold"),
-        }
-
-        model_params = fit_params.get("model_fit_configuration")
-        params = {}
-        for model in model_params:
-            params[model] = model_params.get(model)
-        config["fit_analyst"]["model_fit_configuration"] = params
-
-        config["light_curves"] = self.scenario.get("light_curves")
-
-
-        path_outputs = self.scenario.get("analyst_path")
-
-        light_curves = []
-        for entry in config["light_curves"]:
-            survey = entry["survey"]
-            band = entry["band"]
-            data = input_tools.load_light_curve_from_path(entry["path"])
-
-            ephemeris = None
-            if entry == "ephemeris":
-                ephemeris = input_tools.load_ephemeris_from_path(
-                    entry["ephemeris"],
-                    usecols=(0, 1, 2, 3),
-                )
-
-            light_curves.append(
-                {
-                    "light_curve": data,
-                    "ephemeris": ephemeris,
-                    "survey": survey,
-                    "band": band,
-                }
-            )
+        path_outputs, config, light_curves = self.setup()
 
         log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], stream=False)
         analyst = FitAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
@@ -302,51 +270,7 @@ class FitAnalystTest:
         Test if fitting works.
         """
 
-        config = {
-            "event_name": self.scenario.get("event_name"),
-            "ra": self.scenario.get("ra"),
-            "dec": self.scenario.get("dec"),
-            }
-
-        fit_params = self.scenario.get("fit_analyst")
-
-        config["fit_analyst"] = {
-            "ongoing_magnification_threshold": fit_params.get("ongoing_magnification_threshold"),
-            "ongoing_amplitude_threshold": fit_params.get("ongoing_amplitude_threshold"),
-        }
-
-        model_params = fit_params.get("model_fit_configuration")
-        params = {}
-        for model in model_params:
-            params[model] = model_params.get(model)
-        config["fit_analyst"]["model_fit_configuration"] = params
-
-        config["light_curves"] = self.scenario.get("light_curves")
-
-
-        path_outputs = self.scenario.get("analyst_path")
-
-        light_curves = []
-        for entry in config["light_curves"]:
-            survey = entry["survey"]
-            band = entry["band"]
-            data = input_tools.load_light_curve_from_path(entry["path"])
-
-            ephemeris = None
-            if entry == "ephemeris":
-                ephemeris = input_tools.load_ephemeris_from_path(
-                    entry["ephemeris"],
-                    usecols=(0, 1, 2, 3),
-                )
-
-            light_curves.append(
-                {
-                    "light_curve": data,
-                    "ephemeris": ephemeris,
-                    "survey": survey,
-                    "band": band,
-                }
-            )
+        path_outputs, config, light_curves = self.setup()
 
         log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], stream=False)
         analyst = FitAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
@@ -367,6 +291,28 @@ class FitAnalystTest:
 
         logs.close_log(log)
 
+    def test_return_best_only(self):
+        """
+        Test if returning only best-fitting model works.
+        """
+
+        path_outputs, config, light_curves = self.setup()
+
+        log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], stream=False)
+        analyst = FitAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
+        result = analyst.perform_fit()
+
+        n_models = 0
+        best_model = None
+        for model in result:
+            n_models += 1
+            best_model = model
+
+        assert n_models == 1
+        assert best_model == self.scenario.get("best_model_key")
+
+        logs.close_log(log)
+
 
 def test_run():
     """
@@ -379,8 +325,11 @@ def test_run():
         test.test_check_ongoing()
         if case.get("event_name") == "GaiaDR3_ULENS_025":
             test.test_fit()
+            
+    test = FitAnalystTest(scenario_best_only)
+    test.test_return_best_only()
 
-    for case in [scenario_gaia, scenario_gsa]:
+    for case in [scenario_gaia, scenario_gsa, scenario_best_only]:
         analyst_path = case.get("analyst_path")
         event_name = case.get("event_name")
 

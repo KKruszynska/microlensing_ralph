@@ -89,6 +89,7 @@ class FitAnalyst(BaseAnalyst):
         self.light_curves = light_curves
 
         self.best_results = {}
+        self.best_model = ""
         self.start_time = time.time()
 
         if config_dict is not None:
@@ -469,6 +470,7 @@ class FitAnalyst(BaseAnalyst):
 
         self.log.info(f"Fit Analyst:  Finished fitting model PSPL_blend_piE_{sign}")
 
+
     def evaluate_pspl(self, model_params):
         """
         Checks if best-fitting solution for a particular model has Einstein timescale, source magnitude,
@@ -567,4 +569,27 @@ class FitAnalyst(BaseAnalyst):
                     f"{params['aic_test']:7.2f} {params['bic_test']:7.2f}\n"
                 )
 
+        # Find best fitting model
+        self.log.debug("Fit Analyst: Find best-fitting model.")
+        bf_model = self.evaluate_model()
+        self.log.info(f"Fit Analyst: Best fitting model: {bf_model}")
+        self.best_model = self.best_results[bf_model]
+
         return self.best_results
+
+    def evaluate_model(self):
+        """
+        Evaluate all found models.
+
+        :return: return the key for the best model
+        """
+        best_model_name = ""
+
+        lowest_chi2dof = np.inf
+        for model in self.best_results:
+            chi2dof = self.best_results[model]['red_chi2']
+            if chi2dof < lowest_chi2dof:
+                lowest_chi2dof = chi2dof
+                best_model_name = model
+
+        return best_model_name

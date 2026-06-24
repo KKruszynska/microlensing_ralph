@@ -607,7 +607,6 @@ class FitAnalyst(BaseAnalyst):
                 json.dump(self.best_results, file, ensure_ascii=False, indent=4)
             self.log.debug(f"Fit Analyst: Results saved to {file_name:s}.")
 
-
         else:
             # Save results for the best model only
             self.log.debug("Fit Analyst: Saving results for the best-fitting model only.")

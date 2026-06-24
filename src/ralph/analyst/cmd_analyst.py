@@ -40,12 +40,17 @@ class CmdAnalyst(BaseAnalyst):
 
     Notes on configuration:
     ------------------------------
-    The configuration dictionary can contain the following keywords:
+    The configuration for CMD Analyst in `cmd_analyst` section has to contain a list of dictionaries
+     after the keyword `catalogues`.
+
+    The dictionaries have to contain the following keywords:
 
     * `name`: string
         The name of the catalogue.
+    * `band`: list of strings
+        List of strings with the labels of the bands in the catalogue.
     * `cmd_path`: string
-        The path to the catalogue.
+        The path to the catalogue from which CMD will be built.
     * `separator`: string
         A separator used in the file with the catalogue.
     """

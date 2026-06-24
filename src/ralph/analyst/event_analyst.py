@@ -273,6 +273,9 @@ class EventAnalyst(BaseAnalyst):
         for dictionary in self.config["cmd_analyst"]["catalogues"]:
             catalogue = dictionary["name"]
             for solution in self.fit_results:
+                if solution == "best_fitting_model":
+                    continue
+
                 results = self.fit_results[solution]
                 bands = dictionary["band"]
 

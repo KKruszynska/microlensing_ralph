@@ -266,7 +266,7 @@ class FitAnalystTest:
 
         if config['event_name'] == "Gaia24amo":
             assert status
-        elif config['event_name'] == "GaiaDR3_ULENS_025":
+        elif config['event_name'] == "GDR3_ULENS_025":
             assert not status
 
     def test_fit(self):
@@ -327,7 +327,7 @@ def test_run():
         test = FitAnalystTest(case)
         test.test_parse_config()
         test.test_check_ongoing()
-        if case.get("event_name") == "GaiaDR3_ULENS_025":
+        if case.get("event_name") == "GDR3_ULENS_025":
             test.test_fit()
 
     test = FitAnalystTest(scenario_best_only)

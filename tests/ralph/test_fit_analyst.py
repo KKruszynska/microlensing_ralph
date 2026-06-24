@@ -8,9 +8,14 @@ import pytest
 from ralph.analyst.fit_analyst import FitAnalyst
 from ralph.toolbox import input_tools, logs
 
+
+ralph_output = os.path.join("tests", "ralph", "data", "output")
+ralph_input = os.path.join("tests", "ralph", "data", "input")
+ralph_light_curves = os.path.join(ralph_input, "light_curves")
+
 scenario_gaia = {
-    "analyst_path": "tests/ralph/data/output/fit_analyst/",
-    "event_name": "GaiaDR3_ULENS_025",
+    "analyst_path": os.path.join(ralph_output, "fit_analyst"),
+    "event_name": "GDR3_ULENS_025",
     "ra": 260.8781,
     "dec": -27.3788,
     "fit_analyst": {
@@ -59,37 +64,36 @@ scenario_gaia = {
         {
             "survey": "Gaia",
             "band": "G",
-            "ephemeris": "tests/ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
-            "path": "tests/ralph/data/input/light_curves/GaiaDR3_ULENS_025_Gaia_G.dat",
+            "ephemeris": os.path.join(ralph_input, "ephemeris","gaia_jpl_horizons_results.txt"),
+            "path": os.path.join(ralph_light_curves, "GaiaDR3_ULENS_025_Gaia_G.dat"),
         },
         {
             "survey": "Gaia",
             "band": "BP",
-            "ephemeris": "tests/ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
-            "path": "tests/ralph/data/input/light_curves/GaiaDR3_ULENS_025_Gaia_BP.dat",
+            "ephemeris": os.path.join(ralph_input, "ephemeris","gaia_jpl_horizons_results.txt"),
+            "path":  os.path.join(ralph_light_curves, "GaiaDR3_ULENS_025_Gaia_BP.dat"),
         },
         {
             "survey": "Gaia",
             "band": "RP",
-            "ephemeris": "tests/ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
-            "path": "tests/ralph/data/input/light_curves/GaiaDR3_ULENS_025_Gaia_RP.dat",
+            "ephemeris": os.path.join(ralph_input, "ephemeris","gaia_jpl_horizons_results.txt"),
+            "path": os.path.join(ralph_light_curves, "GaiaDR3_ULENS_025_Gaia_RP.dat"),
         },
         {
             "survey": "OGLE",
             "band": "I",
-            "path": "tests/ralph/data/input/light_curves/GaiaDR3_ULENS_025_OGLE.dat",
+            "path": os.path.join(ralph_light_curves, "GaiaDR3_ULENS_025_OGLE.dat"),
         },
     ],
-    "fit_result": "tests/ralph/data/input/test_results/gdr3_ulens_025_fit_results.json",
+    "fit_result": os.path.join(ralph_input, "test_results", "gdr3_ulens_025_fit_results.json"),
 }
 
 scenario_gsa = {
     "event_name": "Gaia24amo",
     "ra": 249.14892083,
     "dec": -53.74991944,
-    "analyst_path": "tests/ralph/data/output/fit_analyst/",
+    "analyst_path": os.path.join(ralph_output, "fit_analyst"),
     "lc_analyst": {
-        "n_max": 10,
     },
     "fit_analyst": {
         "ongoing_magnification_threshold": 1.10,
@@ -138,26 +142,26 @@ scenario_gsa = {
         {
             "survey": "Gaia",
             "band": "G",
-            "ephemeris": "tests/ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
-            "path": "tests/ralph/data/input/light_curves/Gaia24amo_Gaia_G.dat",
+            "ephemeris": os.path.join(ralph_input, "ephemeris","gaia_jpl_horizons_results.txt"),
+            "path": os.path.join(ralph_light_curves, "Gaia24amo_Gaia_G.dat"),
         },
         {
             "survey": "LCO",
             "band": "g",
-            "path": "tests/ralph/data/input/light_curves/cleaned_Gaia24amo_LCO_g.dat",
+            "path": os.path.join(ralph_light_curves, "cleaned_Gaia24amo_LCO_g.dat"),
         },
         {
             "survey": "LCO",
             "band": "r",
-            "path": "tests/ralph/data/input/light_curves/cleaned_Gaia24amo_LCO_r.dat",
+            "path": os.path.join(ralph_light_curves, "cleaned_Gaia24amo_LCO_r.dat"),
         },
         {
             "survey": "LCO",
             "band": "i",
-            "path": "tests/ralph/data/input/light_curves/cleaned_Gaia24amo_LCO_i.dat",
+            "path": os.path.join(ralph_light_curves, "cleaned_Gaia24amo_LCO_i.dat"),
         },
     ],
-    "fit_result": "tests/ralph/data/input/test_results/gaia24amo_fit_results.json",
+    "fit_result": os.path.join(ralph_input, "test_results", "gaia24amo_fit_results.json"),
 }
 
 scenario_best_only = scenario_gaia
@@ -325,7 +329,7 @@ def test_run():
         test.test_check_ongoing()
         if case.get("event_name") == "GaiaDR3_ULENS_025":
             test.test_fit()
-            
+
     test = FitAnalystTest(scenario_best_only)
     test.test_return_best_only()
 
@@ -333,16 +337,18 @@ def test_run():
         analyst_path = case.get("analyst_path")
         event_name = case.get("event_name")
 
-        output = Path(analyst_path + "fit_results.json")
+        fpath = os.path.join(analyst_path, "fit_results.json")
+        output = Path(fpath)
         if output.exists():
             os.remove(output)
 
-        output = Path(analyst_path + "fit_stats.txt")
+        fpath = os.path.join(analyst_path, "fit_stats.txt")
+        output = Path(fpath)
         if output.exists():
             os.remove(output)
 
-        output = Path(analyst_path + event_name + "_analyst.log")
-        print(output)
+        fpath = os.path.join(analyst_path, event_name + "_analyst.log")
+        output = Path(fpath)
         if output.exists():
             os.remove(output)
 
@@ -354,6 +360,7 @@ def test_run():
             "PSPL_blend_piE_n.html",
         ]
         for element in files:
-            output = Path(analyst_path + element)
+            fpath = os.path.join(analyst_path, element)
+            output = Path(fpath)
             if output.exists():
                 os.remove(output)

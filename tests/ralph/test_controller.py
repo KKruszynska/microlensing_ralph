@@ -22,17 +22,17 @@ class ControllerPathsTest:
         Run controller to check if it works.
         """
         event_list = [
-            "GaiaDR3_ULENS_025",
+            "GDR3_ULENS_025",
         ]
 
         config = {
             "python_compiler": "python",
             "group_processing_limit": 2,
-            "events_path": "tests/ralph/data/input/controller/",
-            "software_dir": "src/ralph/analyst/",
+            "events_path": os.path.join(ralph_tests_home, "input", "controller"),
+            "software_dir": os.path.join("src", "ralph", "analyst"),
             "config_type": "yaml",
             "log_stream": False,
-            "log_location": "tests/ralph/data/output/controller_launch/",
+            "log_location": os.path.join(ralph_tests_home, "output", "controller_launch"),
             "log_level": "debug",
         }
 
@@ -120,16 +120,16 @@ class ControllerPathsOngoingTest:
         Run controller to check if it works.
         """
 
-        event_list = ["AT2024kwu", "Gaia18cbf", "GaiaDR3_ULENS_018"]
+        event_list = ["AT2024kwu", "Gaia18cbf", "GDR3_ULENS_018"]
 
         config = {
             "python_compiler": "python",
             "group_processing_limit": 2,
             "config_type": "yaml",
-            "events_path": "tests/ralph/data/input/controller/",
-            "software_dir": "src/ralph/analyst/",
+            "events_path": os.path.join(ralph_tests_home, "input", "controller"),
+            "software_dir": os.path.join("src", "ralph", "analyst"),
             "log_stream": False,
-            "log_location": "tests/ralph/data/output/controller_analysts/",
+            "log_location": os.path.join(ralph_tests_home, "output", "controller_analysts"),
             "log_level": "debug",
         }
 
@@ -184,7 +184,10 @@ class ControllerPathsOngoingTest:
                 assert output.is_file() is True
 
             expected_result_path = self.expected_results.get(event, None)
-            if expected_result_path is not None and event != "AT2024kwu":
+            if expected_result_path is not None:
+                if event == "AT2024kwu":
+                    continue
+
                 with open(expected_result_path, "r") as file:
                     expected_fit_result = json.load(file)
 
@@ -207,8 +210,8 @@ def test_run():
     """
 
     expected_fit_results = {
-        "GaiaDR3_ULENS_025": "tests/ralph/data/input/test_results/gdr3_ulens_025_fit_results.json",
-        "GaiaDR3_ULENS_018": "tests/ralph/data/input/test_results/gdr3_ulens_018_fit_results.json",
+        "GDR3_ULENS_025": os.path.join(ralph_tests_home, "input", "test_results", "gdr3_ulens_025_fit_results.json"),
+        "GDR3_ULENS_018": os.path.join(ralph_tests_home, "input", "test_results", "gdr3_ulens_018_fit_results.json"),
     }
 
     test = ControllerPathsTest(expected_fit_results)
@@ -218,8 +221,8 @@ def test_run():
     test.test_launch_analysts()
 
     controller_log_path = [
-        "tests/ralph/data/output/controller_launch/",
-        "tests/ralph/data/output/controller_analysts/",
+        os.path.join(ralph_tests_home, "output", "controller_launch"),
+        os.path.join(ralph_tests_home, "output", "controller_analysts"),
     ]
 
     for controller_path in controller_log_path:
@@ -230,9 +233,9 @@ def test_run():
     analyst_home = os.path.join(ralph_tests_home, "input", "controller")
 
     test_events = [
-        "GaiaDR3_ULENS_018",
-        "GaiaDR3_ULENS_025",
-        # "AT2024kwu",
+        "AT2024kwu",
+        "GDR3_ULENS_018",
+        "GDR3_ULENS_025",
         "Gaia18cbf",
     ]
 
@@ -247,7 +250,8 @@ def test_run():
         if output.exists():
             os.remove(output)
 
-        output = Path(os.path.join(analyst_path, event + "_analyst.log"))
+        fpath = os.path.join(analyst_path, event + "_analyst.log")
+        output = Path(fpath)
         if output.exists():
             os.remove(output)
 
@@ -257,6 +261,9 @@ def test_run():
             "PSPL_blend_piE",
             "PSPL_blend_piE_p",
             "PSPL_blend_piE_n",
+            "PSPL_no_blend_piE",
+            "PSPL_no_blend_piE_p",
+            "PSPL_no_blend_piE_n"
         ]
 
         for file_path in model_plots:

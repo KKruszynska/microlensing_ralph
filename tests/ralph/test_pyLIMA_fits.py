@@ -7,7 +7,7 @@ from ralph.fitting_support.pylima.fit_pylima import FitPylima
 from ralph.toolbox import input_tools, logs
 
 scenario = {
-    "event_name": "GaiaDR3_ULENS_025",
+    "event_name": "GDR3_ULENS_025",
     "ra": 260.8781,
     "dec": -27.3788,
     "light_curves": [

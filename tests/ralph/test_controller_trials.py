@@ -9,7 +9,7 @@
 #
 #
 #         event_list = ['GaiaDR3-ULENS-018',
-#                       'GaiaDR3_ULENS_025',
+#                       'GDR3_ULENS_025',
 #                       ]
 #
 #         event_info = pd.read_csv('tests/test_controller/events_info.csv', header=0)
@@ -96,7 +96,7 @@
 #         from MFPipeline.controller.controller import Controller
 #
 #         # event_list = ['Gaia24amo', 'Gaia24cbz', 'AT2024kwu', 'GaiaDR3-ULENS-018',
-#         #               'GaiaDR3_ULENS_025']
+#         #               'GDR3_ULENS_025']
 #
 #         # event_list = ['Gaia24amo', 'AT2024kwu', 'GaiaDR3-ULENS-018']
 #         event_list = ['Gaia24amo']
@@ -118,7 +118,7 @@
 #                 'ra': 271.119,
 #                 'dec': -29.8162,
 #             },
-#             'GaiaDR3_ULENS_025': {
+#             'GDR3_ULENS_025': {
 #                 'ra': 260.8781,
 #                 'dec': -27.3788,
 #             },

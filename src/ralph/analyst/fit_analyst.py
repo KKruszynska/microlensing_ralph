@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from pathlib import Path
 
 import numpy as np
 
@@ -380,7 +381,7 @@ class FitAnalyst(BaseAnalyst):
             self.log.info("Fit Analyst: Bad model with blending, performing PSPL+piE fit without blending.")
             results = self.fit_pspl(
                 "PSPL_no_blend_piE",
-                self.analyst_path + "PSPL_no_blend_piE",
+                os.path.join(self.analyst_path,  "PSPL_no_blend_piE"),
                 starting_params,
                 True,
                 False,
@@ -469,7 +470,7 @@ class FitAnalyst(BaseAnalyst):
 
         results = self.fit_pspl(
             "PSPL_blend_piE",
-            self.analyst_path + "PSPL_blend_piE_" + sign,
+            os.path.join(self.analyst_path, "PSPL_blend_piE_" + sign),
             starting_params,
             True,
             True,
@@ -581,7 +582,7 @@ class FitAnalyst(BaseAnalyst):
         self.log.info(f"Fit Analyst: Best fitting model: {self.best_model}")
 
         # Save best results statistics
-        file_name = self.analyst_path + "fit_stats.txt"
+        file_name = os.path.join(self.analyst_path, "fit_stats.txt")
         with open(file_name, "w", encoding="utf-8") as file:
             file.write(
                 f"{'# name':<20s} : {'chi2':<9s} {'red_chi2':<9s}"
@@ -600,26 +601,35 @@ class FitAnalyst(BaseAnalyst):
             # Save results
             self.log.debug("Fit Analyst: Saving results for all models.")
             # Save results to a file
-            file_name = self.analyst_path + "fit_results.json"
+            file_name = os.path.join(self.analyst_path, "fit_results.json")
             self.best_results["best_fitting_model"] = self.best_model
             with open(file_name, "w", encoding="utf-8") as file:
                 json.dump(self.best_results, file, ensure_ascii=False, indent=4)
             self.log.debug(f"Fit Analyst: Results saved to {file_name:s}.")
 
-            return self.best_results
+
         else:
             # Save results for the best model only
             self.log.debug("Fit Analyst: Saving results for the best-fitting model only.")
-            print("=============================================")
-            print(self.best_model)
-            # print(self.best_results[self.best_model])
             dict_to_save = {
                 self.best_model: self.best_results[self.best_model]
             }
+
             # Save results to a file
-            file_name = self.analyst_path + "fit_results.json"
+            file_name = os.path.join(self.analyst_path, "fit_results.json")
             with open(file_name, "w", encoding="utf-8") as file:
                 json.dump(dict_to_save, file, ensure_ascii=False, indent=4)
             self.log.debug(f"Fit Analyst: Results saved to {file_name:s}.")
 
-            return dict_to_save
+            self.log.debug(f"Fit Analyst: Removing plots for other models.")
+            for model in self.best_results:
+                if model != self.best_model:
+                    plot_path = os.path.join(self.analyst_path, model+".html")
+                    output = Path(plot_path)
+                    if output.exists():
+                        os.remove(output)
+                    self.log.debug(f"Fit Analyst: Removed plot for model: {model}")
+
+            self.best_results = dict_to_save
+
+        return self.best_results

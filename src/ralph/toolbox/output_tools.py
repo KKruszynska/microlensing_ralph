@@ -59,13 +59,18 @@ def plot_outlier_results(
         t_start = sequence["t_start"]
         t_end = sequence["t_end"]
 
-        p.harea(x1=t_start,
-                x2=t_end,
-                y=mag_plot)
+        p.harea(
+            x1=t_start,
+            x2=t_end,
+            y=mag_plot,
+            alpha=0.5,
+            fill_color="cornflowerblue",
+        )
 
         p.vspan(
             x=[t_start, t_end],
-            line_width=[2, 2], line_color="cornflowerblue",
+            line_width=[2, 2],
+            line_color="cornflowerblue",
         )
 
     p.scatter(lc[:,0], lc[:,1],

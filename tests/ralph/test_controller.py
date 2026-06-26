@@ -185,9 +185,6 @@ class ControllerPathsOngoingTest:
 
             expected_result_path = self.expected_results.get(event, None)
             if expected_result_path is not None:
-                if event == "AT2024kwu":
-                    continue
-
                 with open(expected_result_path, "r") as file:
                     expected_fit_result = json.load(file)
 

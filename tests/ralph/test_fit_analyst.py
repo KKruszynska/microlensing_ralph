@@ -164,12 +164,6 @@ scenario_gsa = {
     "fit_result": os.path.join(ralph_input, "test_results", "gaia24amo_fit_results.json"),
 }
 
-scenario_best_only = scenario_gaia
-scenario_best_only["fit_analyst"]["return_all_models"] = False
-scenario_best_only["fit_result"] = None
-scenario_best_only["best_model_key"] = "PSPL_blend_piE_n"
-
-
 class FitAnalystTest:
     """
     Class with tests
@@ -190,7 +184,7 @@ class FitAnalystTest:
         config["fit_analyst"] = {
             "ongoing_magnification_threshold": fit_params.get("ongoing_magnification_threshold"),
             "ongoing_amplitude_threshold": fit_params.get("ongoing_amplitude_threshold"),
-            "return_all_models": fit_params.get("return_all_models"),
+            "return_all_models": fit_params.get("return_all_models", True),
         }
 
         model_params = fit_params.get("model_fit_configuration")
@@ -329,6 +323,11 @@ def test_run():
         test.test_check_ongoing()
         if case.get("event_name") == "GDR3_ULENS_025":
             test.test_fit()
+
+    scenario_best_only = scenario_gaia.copy()
+    scenario_best_only["fit_analyst"]["return_all_models"] = False
+    scenario_best_only["fit_result"] = None
+    scenario_best_only["best_model_key"] = "PSPL_blend_piE_n"
 
     test = FitAnalystTest(scenario_best_only)
     test.test_return_best_only()

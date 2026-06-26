@@ -6,6 +6,7 @@ import json
 import os
 
 from ralph.analyst.analyst import BaseAnalyst
+from ralph.toolbox.output_tools import plot_outlier_results
 
 
 class LightCurveAnalyst(BaseAnalyst):
@@ -56,11 +57,14 @@ class LightCurveAnalyst(BaseAnalyst):
                 - `window`: str
                     Window size (in days), as a `pandas` offset string (e.g. '3D' is 3 days),
                     half of this is applied on each side of each point.
-                    Default value: '3D'
+                    Default value: `'3D'`
                 - `n_sigma`: float
                     Number of standard deviations to use for the Hampel filter, used as a threshold in
                     scaled Median Absolute Deviation for flagging outliers.
-                    Default value: 5.0
+                    Default value: `5.0`
+                - `use_weighted`: bool
+                    If `True` weighted median is used to calculate medians and MADS in the Hampel filter.
+                    Default value: `False`
     * `save_outlier_results`: bool
         If `True`, results of outlier finding procedure will be saved in two files:
         `outlier_results.npz` and `outlier_sequences.json`.
@@ -252,7 +256,7 @@ class LightCurveAnalyst(BaseAnalyst):
 
         self.log.info("LC Analyst: Quality check ended.")
 
-    def hampel_filter(self, light_curve, window='3D', n_sigma=3.0):
+    def hampel_filter(self, light_curve, window='3D', n_sigma=3.0, use_weighted=False):
         """
         A Hampel filter with a time-based window. More about Hampel filter can be
         found [here](https://medium.com/@migueloteropedrido/hampel-filter-with-python-17db1d265375).
@@ -271,8 +275,12 @@ class LightCurveAnalyst(BaseAnalyst):
             scaled Median Absolute Deviation for flagging outliers.
         :type n_sigma: float
 
-        :return: A dictionary with an array of points marked as outliers, array of weighted medians for
-            each window, array of MADs for each window, and array of thresholds for each window.
+        :param use_weighted: If `True` weighted median is used.
+        :type use_weighted: bool
+
+        :return: A dictionary with the light curve, an array of points marked as outliers, array of
+            (weighted) medians for each window, array of MADs for each window, and array
+            of thresholds for each window.
         thresholds for each window.
         :rtype: dict
         """
@@ -294,10 +302,13 @@ class LightCurveAnalyst(BaseAnalyst):
             left = times.searchsorted(t - half_window, side='left')
             right = times.searchsorted(t + half_window, side='right')
             window_vals = values[left:right]
-            # window_weights = weights[left:right]
 
-            med = np.median(window_vals)
-            # med = wst.numpy_weighted_median(window_vals, weights=window_weights)
+            if use_weighted:
+                window_weights = weights[left:right]
+                med = wst.numpy_weighted_median(window_vals, weights=window_weights)
+            else:
+                med = np.median(window_vals)
+
             mad = k * np.median(np.abs(window_vals - med))
             thresh = n_sigma * mad
 
@@ -309,6 +320,7 @@ class LightCurveAnalyst(BaseAnalyst):
             thresholds[i] = thresh
 
         result = {
+            'light_curve': light_curve,
             'is_outlier': is_outlier,
             'medians': medians,
             'mads': mads,
@@ -371,9 +383,11 @@ class LightCurveAnalyst(BaseAnalyst):
                 self.outlier_results[f"{entry["survey"]}_{entry["band"]}"] = (
                     self.hampel_filter(
                         lc,
-                        window=self.config["hampel"]["window"],
-                        n_sigma=self.config["hampel"]["n_sigma"],
-                ))
+                        window=self.config["hampel"].get("window", "3D"),
+                        n_sigma=self.config["hampel"].get("n_sigma", 5.0),
+                        use_weighted=self.config["hampel"].get("use_weighted", False),
+                    )
+                )
             else:
                 self.outlier_results[f"{entry["survey"]}_{entry["band"]}"] = (
                     self.hampel_filter(lc)
@@ -399,5 +413,18 @@ class LightCurveAnalyst(BaseAnalyst):
             with open(os.path.join(self.analyst_path, "outlier_sequences.json"), "w", encoding="utf-8") as file:
                 json.dump(self.outlier_seqs, file, ensure_ascii=False, indent=4)
             self.log.debug(f"LC Analyst: Outlier analysis results saved.")
+
+            for entry in self.light_curves:
+                lc = np.array(entry["light_curve"])
+                outlier_res = self.outlier_results[f"{entry["survey"]}_{entry["band"]}"]
+                outlier_seqs = self.outlier_seqs[f"{entry["survey"]}_{entry["band"]}"]
+                output_fname = f"outlier_results_{entry["survey"]}_{entry["band"]}.html"
+                plot_outlier_results(
+                    os.path.join(self.analyst_path, output_fname),
+                    f"{entry["survey"]}_{entry["band"]}",
+                    lc,
+                    outlier_res,
+                    outlier_seqs,
+                )
 
         self.log.info("LC Analyst: Outlier check ended.")

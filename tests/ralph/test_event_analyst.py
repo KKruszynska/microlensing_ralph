@@ -5,10 +5,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from ralph.analyst.event_analyst import EventAnalyst
+from microlensing_ralph.analyst.event_analyst import EventAnalyst
 
-ralph_output = os.path.join("tests", "ralph", "data", "output")
-ralph_input = os.path.join("tests", "ralph", "data", "input")
+ralph_output = os.path.join("tests", "microlensing_ralph", "data", "output")
+ralph_input = os.path.join("tests", "microlensing_ralph", "data", "input")
 ralph_light_curves = os.path.join(ralph_input, "light_curves")
 
 scenario_file_cat = {
@@ -76,7 +76,7 @@ scenario_file_cat = {
                 {
                     "name": "Gaia_DR3",
                     "band": ["Gaia_G", "Gaia_BP", "Gaia_RP"],
-                    "cmd_path": os.path.join("tests","ralph","data","input","cmd","gdr3_ulens_025_result.csv"),
+                    "cmd_path": os.path.join("tests","microlensing_ralph","data","input","cmd","gdr3_ulens_025_result.csv"),
                     "cmd_separator": ",",
                 },
             ]
@@ -454,7 +454,7 @@ class EventAnalystTest:
         """
 
         event_analyst = EventAnalyst(
-            "no_config", "tests/ralph/data/output/event_analyst/no_config/",
+            "no_config", "tests/microlensing_ralph/data/output/event_analyst/no_config/",
             "debug", config_dict=self.scenario, stream=True
         )
 

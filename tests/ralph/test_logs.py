@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from ralph.toolbox import logs
+from microlensing_ralph.toolbox import logs
 
 
 class LogsTest:
@@ -25,7 +25,7 @@ class LogsTest:
         """
 
         self.log = logs.start_log(
-            "tests/ralph/data/output/logs/", self.log_level, event_name=f"test_{self.log_level:s}"
+            "tests/microlensing_ralph/data/output/logs/", self.log_level, event_name=f"test_{self.log_level:s}"
         )
 
     def test_debug_log(self):
@@ -93,7 +93,7 @@ def test_run():
     run_debug_test()
     run_error_test()
 
-    analyst_path = "tests/ralph/data/output/logs/"
+    analyst_path = "tests/microlensing_ralph/data/output/logs/"
     log_level = ["info", "debug", "error"]
 
     for level in log_level:

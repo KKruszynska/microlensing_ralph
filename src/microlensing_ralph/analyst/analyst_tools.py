@@ -6,7 +6,7 @@ from astropy.time import Time
 from astropy.timeseries import TimeSeries, aggregate_downsample
 from astropy import units as u
 
-from ralph.fitting_support.pylima import fit_pylima
+from microlensing_ralph.fitting_support.pylima import fit_pylima
 
 def get_baseline_mag(mag_source, err_source, mag_blend, err_blend, fit_package, log):
     """

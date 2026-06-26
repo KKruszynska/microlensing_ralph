@@ -5,15 +5,15 @@ from pathlib import Path
 
 import numpy as np
 
-from ralph.analyst import analyst_tools
-from ralph.analyst.analyst import BaseAnalyst
-from ralph.fitting_support import pylima
+from microlensing_ralph.analyst import analyst_tools
+from microlensing_ralph.analyst.analyst import BaseAnalyst
+from microlensing_ralph.fitting_support import pylima
 
 
 class FitAnalyst(BaseAnalyst):
     """
     Performs fitting microlensing models to one event.
-    It is a subclass of the :class:`ralph.analyst.analyst.BaseAnalyst`
+    It is a subclass of the :class:`microlensing_ralph.analyst.analyst.BaseAnalyst`
     It follows a flowchart specified here: link link link
 
     A Fit Analyst needs either a config_path or config_dict, otherwise it will not work.
@@ -55,7 +55,7 @@ class FitAnalyst(BaseAnalyst):
     * `return_all_models`: bool
         If `True`, `Ralph` will return plots, model parameters, and (optionally) CMDs for all
         found models. Otherwise, if `False` it will return only best fitting model according
-        to the :meth:`ralph.analyst.fit_analyst.FitAnalyst.evaluate_models`.
+        to the :meth:`microlensing_ralph.analyst.fit_analyst.FitAnalyst.evaluate_models`.
         Default value: `True`
     * `model_fit_configuration`: dictionary
         A dictionary with configuration for specific types of models.
@@ -69,8 +69,8 @@ class FitAnalyst(BaseAnalyst):
             - `PSPL_blend_piE` - point source-point lens model with blending and
                 microlensing parallax effect;
         For each model the User can specify following keywords:
-            - `fitting_package` - str, name of the fitting package supported by `ralph`;
-            - `fitting_method` - str, type of fitting method supported by the `fitting_package` and `ralph`;
+            - `fitting_package` - str, name of the fitting package supported by `microlensing_ralph`;
+            - `fitting_method` - str, type of fitting method supported by the `fitting_package` and `microlensing_ralph`;
             - `boundaries` - dict, a dictionary containing a list of keywords, and a list with two
                 elements, a lower and upper limit for the given parameter:
                 `key: [lower_limit, upper_limit]`

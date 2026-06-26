@@ -42,31 +42,31 @@ fit_analyst:
 light_curves:
     - survey: Gaia
       band: G
-      ephemeris: tests/ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt
-      path: tests/ralph/data/input/light_curves/GaiaDR3_ULENS_018_Gaia_G.dat
+      ephemeris: tests/microlensing_ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt
+      path: tests/microlensing_ralph/data/input/light_curves/GaiaDR3_ULENS_018_Gaia_G.dat
 
     - survey: Gaia
       band: BP
-      ephemeris: tests/ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt
-      path: tests/ralph/data/input/light_curves/GaiaDR3_ULENS_018_Gaia_BP.dat
+      ephemeris: tests/microlensing_ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt
+      path: tests/microlensing_ralph/data/input/light_curves/GaiaDR3_ULENS_018_Gaia_BP.dat
 
     - survey: Gaia
       band: RP
-      ephemeris: tests/ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt
-      path: tests/ralph/data/input/light_curves/GaiaDR3_ULENS_018_Gaia_RP.dat
+      ephemeris: tests/microlensing_ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt
+      path: tests/microlensing_ralph/data/input/light_curves/GaiaDR3_ULENS_018_Gaia_RP.dat
 
     - survey: OGLE
       band: I
-      path: tests/ralph/data/input/light_curves/OGLE_2016_BLG_1396_I.dat
+      path: tests/microlensing_ralph/data/input/light_curves/OGLE_2016_BLG_1396_I.dat
 
     - survey: KMTNet_A
       band: I
-      path: tests/ralph/data/input/light_curves/KMT_2016_BLG_0738_KMTA_I.dat
+      path: tests/microlensing_ralph/data/input/light_curves/KMT_2016_BLG_0738_KMTA_I.dat
 
     - survey: KMTNet_C
       band: I
-      path: tests/ralph/data/input/light_curves/KMT_2016_BLG_0738_KMTC_I.dat
+      path: tests/microlensing_ralph/data/input/light_curves/KMT_2016_BLG_0738_KMTC_I.dat
 
     - survey: KMTNet_S
       band: I
-      path: tests/ralph/data/input/light_curves/KMT_2016_BLG_0738_KMTS_I.dat
+      path: tests/microlensing_ralph/data/input/light_curves/KMT_2016_BLG_0738_KMTS_I.dat

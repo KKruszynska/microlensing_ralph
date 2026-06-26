@@ -5,15 +5,15 @@ from pyLIMA.fits.objective_functions import photometric_residuals_in_magnitude
 from pyLIMA.models import PSPL_model
 from pyLIMA.outputs.pyLIMA_plots import create_telescopes_to_plot_model
 
-from ralph.fitting_support.fitter import Fitter
-from ralph.fitting_support.pylima import plots_pylima
+from microlensing_ralph.fitting_support.fitter import Fitter
+from microlensing_ralph.fitting_support.pylima import plots_pylima
 
 
 class FitPylima(Fitter):
     """
     A class containing functions necessary to perform microlensing model fitting
     with the pyLIMA package, found here: https://github.com/ebachelet/pyLIMA
-    It is a subclass of the :class ralph.src.fitting_support.fit.Fitter:.
+    It is a subclass of the :class microlensing_ralph.src.fitting_support.fit.Fitter:.
 
     :param log: A logger instance initialized by the Event Analyst, to which the logs will be written.
     :type log: logging.Logger
@@ -202,7 +202,7 @@ class FitPylima(Fitter):
 
         # Use boundries like in mop.toolbox.fittools
         if use_boundaries is None:
-            self.log.info("Fit Analyst -- pyLIMA: Using boundaries default for ralph.")
+            self.log.info("Fit Analyst -- pyLIMA: Using boundaries default for microlensing_ralph.")
             delta_t0 = 50.0
             default_t0_lower = fit_event.fit_parameters["t0"][1][0]
             default_t0_upper = fit_event.fit_parameters["t0"][1][1]
@@ -254,7 +254,7 @@ class FitPylima(Fitter):
     def gather_parameters(self, event, model_fit, fitting_method=None):
         """
         Gathers parameters into a dictionary, for easier handling.
-        Like in mop.toolbox.fittools, but edited to accommodate wider usage in `ralph`.
+        Like in mop.toolbox.fittools, but edited to accommodate wider usage in `microlensing_ralph`.
 
         :param event: A pyLIMA event instance.
         :type event: pyLIMA.event.Event

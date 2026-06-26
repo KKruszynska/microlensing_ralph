@@ -3,13 +3,13 @@ from pathlib import Path
 
 import pandas as pd
 
-from ralph.analyst.cmd_analyst import CmdAnalyst
-from ralph.toolbox import logs
+from microlensing_ralph.analyst.cmd_analyst import CmdAnalyst
+from microlensing_ralph.toolbox import logs
 
 scenario_file = {
-    "path_input": "tests/ralph/data/input/cmd/gdr3_ulens_025_result.csv",
+    "path_input": "tests/microlensing_ralph/data/input/cmd/gdr3_ulens_025_result.csv",
     "separator": ",",
-    "path_outputs": "tests/ralph/data/output/cmd_analyst/",
+    "path_outputs": "tests/microlensing_ralph/data/output/cmd_analyst/",
     "event_name": "GDR3_ULENS_025",
     "ra": 260.8781,
     "dec": -27.3788,

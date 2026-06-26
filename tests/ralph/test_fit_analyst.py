@@ -5,12 +5,12 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from ralph.analyst.fit_analyst import FitAnalyst
-from ralph.toolbox import input_tools, logs
+from microlensing_ralph.analyst.fit_analyst import FitAnalyst
+from microlensing_ralph.toolbox import input_tools, logs
 
 
-ralph_output = os.path.join("tests", "ralph", "data", "output")
-ralph_input = os.path.join("tests", "ralph", "data", "input")
+ralph_output = os.path.join("tests", "microlensing_ralph", "data", "output")
+ralph_input = os.path.join("tests", "microlensing_ralph", "data", "input")
 ralph_light_curves = os.path.join(ralph_input, "light_curves")
 
 scenario_gaia = {

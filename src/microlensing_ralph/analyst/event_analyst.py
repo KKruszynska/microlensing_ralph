@@ -3,18 +3,18 @@ import sys
 
 import yaml
 
-from ralph.analyst import analyst_tools
-from ralph.analyst.analyst import BaseAnalyst
-from ralph.analyst.cmd_analyst import CmdAnalyst
-from ralph.analyst.fit_analyst import FitAnalyst
-from ralph.analyst.light_curve_analyst import LightCurveAnalyst
-from ralph.toolbox import input_tools, logs
+from microlensing_ralph.analyst import analyst_tools
+from microlensing_ralph.analyst.analyst import BaseAnalyst
+from microlensing_ralph.analyst.cmd_analyst import CmdAnalyst
+from microlensing_ralph.analyst.fit_analyst import FitAnalyst
+from microlensing_ralph.analyst.light_curve_analyst import LightCurveAnalyst
+from microlensing_ralph.toolbox import input_tools, logs
 
 
 class EventAnalyst(BaseAnalyst):
     """
     A class that analyzes a single event.
-    It is a subclass of the :class:`ralph.analyst.analyst.BaseAnalyst`
+    It is a subclass of the :class:`microlensing_ralph.analyst.analyst.BaseAnalyst`
     It coordinates and manages other analysts that handle the analysis of
     the microlensing event (e.g., preprocessing the light curve, fitting
     different microlensing models, creating files with results, event plots,
@@ -53,13 +53,13 @@ class EventAnalyst(BaseAnalyst):
         Declination of the event in degrees.
     * `lc_analyst`: dict, optional
         A dictionary with Light Curve Analyst configuration,
-        see: :class:`ralph.analyst.light_curve_analyst.LightCurveAnalyst`.
+        see: :class:`microlensing_ralph.analyst.light_curve_analyst.LightCurveAnalyst`.
     * `fit_analyst`: dict, optional
         A dictionary with Fit Analyst configuration,
-        see: :class:`ralph.analyst.fit_analyst.FitAnalyst`.
+        see: :class:`microlensing_ralph.analyst.fit_analyst.FitAnalyst`.
     * `cmd_analyst`: dict, optional
         A dictionary with CMD Analyst configuration,
-        see: :class:`ralph.analyst.cmd_analyst.CMDAnalyst`.
+        see: :class:`microlensing_ralph.analyst.cmd_analyst.CMDAnalyst`.
     * `light_curves`: list of dictionaries
         A list of dictionaries with the light curves for the event, mandatory.
         The dictionaries contain the following keywords:

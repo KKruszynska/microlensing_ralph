@@ -42,5 +42,5 @@ fit_analyst:
 light_curves:
     - survey: Gaia
       band: G
-      ephemeris: tests/ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt
-      path: tests/ralph/data/input/light_curves/Gaia18cbf_Gaia_G.dat
+      ephemeris: tests/microlensing_ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt
+      path: tests/microlensing_ralph/data/input/light_curves/Gaia18cbf_Gaia_G.dat

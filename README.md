@@ -1,5 +1,5 @@
 
-# Ralph
+# Microlesning_Ralph
 [![Template](https://img.shields.io/badge/Template-LINCC%20Frameworks%20Python%20Project%20Template-brightgreen)](https://lincc-ppt.readthedocs.io/en/latest/)
 
 [![PyPI](https://img.shields.io/pypi/v/ralph?color=blue&logo=pypi&logoColor=white)](https://pypi.org/project/ralph/)
@@ -19,7 +19,7 @@ packages.
 To start, please check [the Installation Guide](https://microlensingralph.readthedocs.io/en/latest/guide_install.html), 
 and [the Set-Up Tutorial](https://microlensingralph.readthedocs.io/en/latest/notebooks/controller_setup.html). 
 
-You can look up the [documentation]https://microlensingralph.readthedocs.io/en/latest/index.html). Let us know if there
+You can look up the [documentation](https://microlensingralph.readthedocs.io/en/latest/index.html). Let us know if there
 are any missing sections!
 
 If you run into any issues, [please create 
@@ -27,8 +27,11 @@ an Issue through GitHub](https://github.com/KKruszynska/ralph/issues).
 
 ## Author's list
 This package was created by:
-- Katarzyna Kruszyńska, Las Cumbres Observatory
-- [Rachel Street](https://lco.global/user/rstreet/), Las Cumbres Observatory.
+- Katarzyna Kruszyńska, Las Cumbres Observatory,
+- [Rachel Street](https://lco.global/user/rstreet/), Las Cumbres Observatory,
+- Etienne Bachelet, Université Marie et Louis Pasteur,
+- Markus Hundertmark, ARI, University of Heidelberg,
+- Yiannis Tsapras, ARI,  University of Heidelberg,
 
 ## Acknowledgments
 We will post resources to cite this package once they are available.

@@ -5,9 +5,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from ralph.controller.controller import Controller
+from microlensing_ralph.controller.controller import Controller
 
-ralph_tests_home = os.path.join("tests", "ralph", "data")
+ralph_tests_home = os.path.join("tests", "microlensing_ralph", "data")
 
 class ControllerPathsTest:
     """
@@ -29,7 +29,7 @@ class ControllerPathsTest:
             "python_compiler": "python",
             "group_processing_limit": 2,
             "events_path": os.path.join(ralph_tests_home, "input", "controller"),
-            "software_dir": os.path.join("src", "ralph", "analyst"),
+            "software_dir": os.path.join("src", "microlensing_ralph", "analyst"),
             "config_type": "yaml",
             "log_stream": False,
             "log_location": os.path.join(ralph_tests_home, "output", "controller_launch"),
@@ -127,7 +127,7 @@ class ControllerPathsOngoingTest:
             "group_processing_limit": 2,
             "config_type": "yaml",
             "events_path": os.path.join(ralph_tests_home, "input", "controller"),
-            "software_dir": os.path.join("src", "ralph", "analyst"),
+            "software_dir": os.path.join("src", "microlensing_ralph", "analyst"),
             "log_stream": False,
             "log_location": os.path.join(ralph_tests_home, "output", "controller_analysts"),
             "log_level": "debug",

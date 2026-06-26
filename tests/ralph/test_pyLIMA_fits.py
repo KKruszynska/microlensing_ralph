@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from ralph.fitting_support.pylima.fit_pylima import FitPylima
-from ralph.toolbox import input_tools, logs
+from microlensing_ralph.fitting_support.pylima.fit_pylima import FitPylima
+from microlensing_ralph.toolbox import input_tools, logs
 
 scenario = {
     "event_name": "GDR3_ULENS_025",
@@ -14,25 +14,25 @@ scenario = {
         {
             "survey": "Gaia",
             "band": "G",
-            "ephemeris": "tests/ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
-            "path": "tests/ralph/data/input/light_curves/GaiaDR3_ULENS_025_Gaia_G.dat",
+            "ephemeris": "tests/microlensing_ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
+            "path": "tests/microlensing_ralph/data/input/light_curves/GaiaDR3_ULENS_025_Gaia_G.dat",
         },
         {
             "survey": "Gaia",
             "band": "BP",
-            "ephemeris": "tests/ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
-            "path": "tests/ralph/data/input/light_curves/GaiaDR3_ULENS_025_Gaia_BP.dat",
+            "ephemeris": "tests/microlensing_ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
+            "path": "tests/microlensing_ralph/data/input/light_curves/GaiaDR3_ULENS_025_Gaia_BP.dat",
         },
         {
             "survey": "Gaia",
             "band": "RP",
-            "ephemeris": "tests/ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
-            "path": "tests/ralph/data/input/light_curves/GaiaDR3_ULENS_025_Gaia_RP.dat",
+            "ephemeris": "tests/microlensing_ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
+            "path": "tests/microlensing_ralph/data/input/light_curves/GaiaDR3_ULENS_025_Gaia_RP.dat",
         },
         {
             "survey": "OGLE",
             "band": "I",
-            "path": "tests/ralph/data/input/light_curves/GaiaDR3_ULENS_025_OGLE.dat",
+            "path": "tests/microlensing_ralph/data/input/light_curves/GaiaDR3_ULENS_025_OGLE.dat",
         },
     ],
 }
@@ -73,7 +73,7 @@ class TestPylima:
         """
         Test setting up event instance with pyLIMA.
         """
-        log = logs.start_log("tests/ralph/data/output/pyLIMA/", "debug", event_name="test_pylima_fits_event")
+        log = logs.start_log("tests/microlensing_ralph/data/output/pyLIMA/", "debug", event_name="test_pylima_fits_event")
 
         event_name = self.event_name
 
@@ -94,7 +94,7 @@ class TestPylima:
         """
         Test fitting with pyLIMA for PSPL without secondary effects.
         """
-        log = logs.start_log("tests/ralph/data/output/pyLIMA/", "debug", event_name="test_pylima_fits_pspl")
+        log = logs.start_log("tests/microlensing_ralph/data/output/pyLIMA/", "debug", event_name="test_pylima_fits_pspl")
 
         fit_pspl = FitPylima(log)
         log.info("Fitting event.")
@@ -124,7 +124,7 @@ class TestPylima:
         """
         Testing pylima parallax model fit implementation.
         """
-        log = logs.start_log("tests/ralph/data/output/pyLIMA/", "debug", event_name="test_pyLIMA_fits_pie")
+        log = logs.start_log("tests/microlensing_ralph/data/output/pyLIMA/", "debug", event_name="test_pyLIMA_fits_pie")
 
         fit_pspl = FitPylima(log)
         log.info("Fitting event.")
@@ -168,7 +168,7 @@ def test_run():
     test.test_fit_pspl()
     test.test_fit_parallax()
 
-    analyst_path = "tests/ralph/data/output/pyLIMA/"
+    analyst_path = "tests/microlensing_ralph/data/output/pyLIMA/"
     event_names = ["test_pyLIMA_fits_pie", "test_pylima_fits_event", "test_pylima_fits_pspl"]
 
     for event in event_names:

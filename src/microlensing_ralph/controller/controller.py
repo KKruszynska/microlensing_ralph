@@ -4,8 +4,8 @@ import subprocess
 
 import yaml
 
-from ralph.toolbox import logs
-from ralph.toolbox.custom_process_pool_excecutor import RalphPoolExecutor
+from microlensing_ralph.toolbox import logs
+from microlensing_ralph.toolbox.custom_process_pool_excecutor import RalphPoolExecutor
 
 
 class Controller:
@@ -129,7 +129,7 @@ class Controller:
 
     def launch_analysts(self):
         """
-        This function starts and parallelizes the :class:`ralph.analyst.event_analyst.EventAnalyst`.
+        This function starts and parallelizes the :class:`microlensing_ralph.analyst.event_analyst.EventAnalyst`.
         """
 
         self.log.info("Controller: Start processing.")

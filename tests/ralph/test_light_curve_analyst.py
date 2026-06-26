@@ -3,11 +3,11 @@ from pathlib import Path
 
 import numpy as np
 
-from ralph.analyst.light_curve_analyst import LightCurveAnalyst
-from ralph.toolbox import input_tools, logs
+from microlensing_ralph.analyst.light_curve_analyst import LightCurveAnalyst
+from microlensing_ralph.toolbox import input_tools, logs
 
 scenario_gaia = {
-    "path_outputs": "tests/ralph/data/output/lc_analyst/",
+    "path_outputs": "tests/microlensing_ralph/data/output/lc_analyst/",
     "event_name": "GDR3_ULENS_025",
     "ra": 260.8781,
     "dec": -27.3788,
@@ -16,31 +16,31 @@ scenario_gaia = {
         {
             "survey": "Gaia",
             "band": "G",
-            "ephemeris": "tests/ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
-            "path": "tests/ralph/data/input/light_curves/GaiaDR3_ULENS_025_Gaia_G.dat",
+            "ephemeris": "tests/microlensing_ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
+            "path": "tests/microlensing_ralph/data/input/light_curves/GaiaDR3_ULENS_025_Gaia_G.dat",
         },
         {
             "survey": "Gaia",
             "band": "BP",
-            "ephemeris": "tests/ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
-            "path": "tests/ralph/data/input/light_curves/GaiaDR3_ULENS_025_Gaia_BP.dat",
+            "ephemeris": "tests/microlensing_ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
+            "path": "tests/microlensing_ralph/data/input/light_curves/GaiaDR3_ULENS_025_Gaia_BP.dat",
         },
         {
             "survey": "Gaia",
             "band": "RP",
-            "ephemeris": "tests/ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
-            "path": "tests/ralph/data/input/light_curves/GaiaDR3_ULENS_025_Gaia_RP.dat",
+            "ephemeris": "tests/microlensing_ralph/data/input/ephemeris/gaia_jpl_horizons_results.txt",
+            "path": "tests/microlensing_ralph/data/input/light_curves/GaiaDR3_ULENS_025_Gaia_RP.dat",
         },
         {
             "survey": "OGLE",
             "band": "I",
-            "path": "tests/ralph/data/input/light_curves/GaiaDR3_ULENS_025_OGLE.dat",
+            "path": "tests/microlensing_ralph/data/input/light_curves/GaiaDR3_ULENS_025_OGLE.dat",
         },
     ],
 }
 
 scenario_gsa = {
-    "path_outputs": "tests/ralph/data/output/lc_analyst/",
+    "path_outputs": "tests/microlensing_ralph/data/output/lc_analyst/",
     "event_name": "Gaia24amo",
     "ra": 249.14892083,
     "dec": -53.74991944,
@@ -50,22 +50,22 @@ scenario_gsa = {
         {
             "survey": "Gaia",
             "band": "G",
-            "path": "tests/ralph/data/input/light_curves/Gaia24amo_Gaia_G.dat",
+            "path": "tests/microlensing_ralph/data/input/light_curves/Gaia24amo_Gaia_G.dat",
         },
         {
             "survey": "LCO",
             "band": "g",
-            "path": "tests/ralph/data/input/light_curves/Gaia24amo_LCO_g.dat",
+            "path": "tests/microlensing_ralph/data/input/light_curves/Gaia24amo_LCO_g.dat",
         },
         {
             "survey": "LCO",
             "band": "r",
-            "path": "tests/ralph/data/input/light_curves/Gaia24amo_LCO_r.dat",
+            "path": "tests/microlensing_ralph/data/input/light_curves/Gaia24amo_LCO_r.dat",
         },
         {
             "survey": "LCO",
             "band": "i",
-            "path": "tests/ralph/data/input/light_curves/Gaia24amo_LCO_i.dat",
+            "path": "tests/microlensing_ralph/data/input/light_curves/Gaia24amo_LCO_i.dat",
         },
     ],
 }
@@ -168,7 +168,7 @@ class BadLightCurvesTest:
 
         config = {}
         config["event_name"] = "test_negative_errs"
-        path_outputs = "tests/ralph/data/output/lc_analyst/"
+        path_outputs = "tests/microlensing_ralph/data/output/lc_analyst/"
         config["ra"], config["dec"] = 1.0, 1.0
         config["lc_analyst"] = {}
         config["lc_analyst"]["n_max"] = 10.0

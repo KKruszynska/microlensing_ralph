@@ -214,6 +214,11 @@ class FitPylima(Fitter):
                 fit_event.fit_parameters["piEE"][1] = [-2.0, 2.0]
         else:
             self.log.info("Fit Analyst -- pyLIMA: Using boundaries passed by the User.")
+            if "t0" not in use_boundaries:
+                delta_t0 = 50.0
+                default_t0_lower = fit_event.fit_parameters["t0"][1][0]
+                default_t0_upper = fit_event.fit_parameters["t0"][1][1]
+                fit_event.fit_parameters["t0"][1] = [default_t0_lower, default_t0_upper + delta_t0]
             for key in use_boundaries:
                 self.log.debug(
                     f"Fit Analyst -- pyLIMA: Boundaries for {key} = {use_boundaries[key]}."

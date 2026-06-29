@@ -6,10 +6,12 @@ import pandas as pd
 from microlensing_ralph.analyst.cmd_analyst import CmdAnalyst
 from microlensing_ralph.toolbox import logs
 
+ralph_data = os.path.join("tests", "microlensing_ralph", "data")
+
 scenario_file = {
-    "path_input": "tests/microlensing_ralph/data/input/cmd/gdr3_ulens_025_result.csv",
+    "path_input": os.path.join(ralph_data, "input", "cmd", "gdr3_ulens_025_result.csv"),
     "separator": ",",
-    "path_outputs": "tests/microlensing_ralph/data/output/cmd_analyst/",
+    "path_outputs": os.path.join(ralph_data, "output", "cmd_analyst"),
     "event_name": "GDR3_ULENS_025",
     "ra": 260.8781,
     "dec": -27.3788,
@@ -136,7 +138,8 @@ class CmdAnalystTest:
         cmd_labels = self.scenario.get("catalogue_bands")
 
         for band in cmd_labels:
-            output = Path(f"./{path_outputs}/{event_name}_CMD_{catalogue_name}_{band}.html")
+            fpath = os.path.join(path_outputs, f"{event_name}_CMD_{catalogue_name}_{band}.html")
+            output = Path(fpath)
             assert output.exists() is True
             assert output.is_file() is True
 
@@ -199,14 +202,15 @@ def test_run():
     # for case in [scenario_gaia, scenario_gsa]:
     analyst_path = case.get("path_outputs")
     event_name = case.get("event_name")
-    print(analyst_path, event_name)
-    output = Path(analyst_path + event_name + "_analyst.log")
+    fpath = os.path.join(analyst_path, event_name + "_analyst.log")
+    output = Path(fpath)
     if output.exists():
         os.remove(output)
 
     catalogue_name = case.get("catalogue_name")
 
     for band in case.get("catalogue_bands"):
-        output = Path(f"./{analyst_path}/{event_name}_CMD_{catalogue_name}_{band}.html")
+        fpath = os.path.join(analyst_path, f"{event_name}_CMD_{catalogue_name}_{band}.html")
+        output = Path(fpath)
         if output.exists():
             os.remove(output)

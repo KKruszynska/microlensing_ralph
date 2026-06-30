@@ -107,6 +107,9 @@ class FitAnalyst(BaseAnalyst):
         self.best_model = ""
         self.start_time = time.time()
 
+        self.outlier_results = outlier_results
+        self.outlier_seqs = outlier_seqs
+
         if config_dict is not None:
             self.config = self.parse_config(config_dict=config_dict)
             self.add_fit_config(config_dict)
@@ -549,12 +552,22 @@ class FitAnalyst(BaseAnalyst):
         :rtype: dict
         """
 
-        # TODO: Add outlier removal here before first fits. Sequences of outliers will be
-        #       evaluated to check if they aren't true anomalies here.
         # TODO: Add Hampel filter for residuals of best fitting model.
         # TODO: Add sorting input into a pd.DataFrame required by SIGNALMEN and check if
         #       outlier sequences are occurring at the same time.
-        #
+
+        # First I will mask outliers before initial fits. They will be re-evaluated
+        # later.
+        if self.outlier_results is not None:
+            self.log.debug(f"Fit Analyst: Masking outliers before initial fits.")
+            for entry in self.light_curves:
+                # extract np array with the light curve
+                lc_tag = f"{entry["survey"]}_{entry["band"]}"
+                lc = np.array(entry["light_curve"])
+                if lc_tag in self.outlier_results:
+                    outlier_flags =  self.outlier_results[lc_tag]["is_outlier"]
+                    entry["light_curve_with_outliers"] = lc
+                    entry["light_curve"] = lc[~outlier_flags]
 
         self.log.debug("Fit Analyst: Performing a fit.")
         ongoing, t_0 = self.perform_ongoing_check()
@@ -563,13 +576,13 @@ class FitAnalyst(BaseAnalyst):
         if ongoing:
             self.log.info("Fit Analyst: Performing an ongoing fit.")
             self.perform_ongoing_fit(t_0)
-            # perform model evaluation here
+            self.best_model = self.evaluate_models()
             # perform anomaly finder on best model
 
         else:
             self.log.info("Fit Analyst: Performing a finished event fit.")
             self.perform_finished_fit_pspl(t_0)
-            # perform model evaluation here
+            self.best_model = self.evaluate_models()
             # perform anomaly finder on best model
             # if anomaly: perform_finished_fit_multiple()
             # else if peak covered: perform_finished_FSPL()

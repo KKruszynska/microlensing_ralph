@@ -278,6 +278,72 @@ scenario_kwu = {
     },
 }
 
+scenario_roman = {
+    "analyst_path": os.path.join(ralph_output, "fit_analyst"),
+    "event_name": "ulwdc1_018_W149",
+    "ra": 267.871,
+    "dec": -29.6712,
+    "lc_analyst": {"acceptable_mag_range":
+                       {"upper_limit": -5, "lower_limit": 30},
+                   "max_acceptable_err": 1.0,
+                   "hampel": {
+                       "window": "1D",
+                       "n_sigma": 3.0,
+                       "use_weighted": False,
+                   },
+                   "save_outlier_results": True,
+                   },
+    "fit_analyst": {
+        "ongoing_magnification_threshold": 1.10,
+        "ongoing_amplitude_threshold": 1.0,
+        "return_all_models": True,
+        "model_fit_configuration": {
+            "PSPL_no_blend_no_piE": {
+                "fitting_package": "pyLIMA",
+                "fitting_method": "DE",
+                "fitting_method_args": {
+                    "DE_population": 10,
+                    "loss_function": "soft_l1",
+                },
+                "boundaries": {
+                    "u0": [0.0, 2.0],
+                }
+            },
+            "PSPL_blend_no_piE": {
+                "fitting_package": "pyLIMA",
+                "fitting_method": "TRF",
+                "boundaries": {
+                    "u0": [-2.0, 2.0],
+                }
+            },
+            "PSPL_blend_piE": {
+                "fitting_package": "pyLIMA",
+                "fitting_method": "TRF",
+                "boundaries": {
+                    "u0": [-2.0, 2.0],
+                    "piEN": [-1.0, 1.0],
+                    "piEE": [-1.0, 1.0],
+                }
+            },
+            "PSPL_no_blend_piE": {
+                "fitting_package": "pyLIMA",
+                "fitting_method": "TRF",
+                "boundaries": {
+                    "u0": [-2.0, 2.0],
+                    "piEN": [-1.0, 1.0],
+                    "piEE": [-1.0, 1.0],
+                }
+            },
+        }
+    },
+    "light_curves": [
+        {
+            "survey": "Roman",
+            "band": "W149",
+            "path": os.path.join(ralph_light_curves, "ulwdc1_018_W149.txt"),
+        },
+    ],
+}
 
 class EventAnalystTest:
     """
@@ -465,57 +531,60 @@ def test_run():
     Run all tests.
     """
 
-    case = scenario_file_cat
-    test = EventAnalystTest(case)
-    test.test_parse_config()
-    test.test_run_analyst_file()
+    # case = scenario_file_cat
+    # test = EventAnalystTest(case)
+    # test.test_parse_config()
+    # test.test_run_analyst_file()
+    #
+    # for case in [scenario_kwu, scenario_gsa]:
+    #     test = EventAnalystTest(case)
+    #     test.test_run_analyst_dict()
 
-    for case in [scenario_kwu, scenario_gsa]:
-        test = EventAnalystTest(case)
-        test.test_run_analyst_dict()
+    test = EventAnalystTest(scenario_roman)
+    test.test_run_analyst_dict()
 
-    # Remove created files
-    for case in [scenario_file_cat, scenario_kwu, scenario_gsa]:
-        analyst_path = case.get("analyst_path")
-        event_name = case.get("event_name")
-
-        fpath = os.path.join(analyst_path, "fit_results.json")
-        output = Path(fpath)
-        if output.exists():
-            os.remove(output)
-
-        fpath = os.path.join(analyst_path, "fit_stats.txt")
-        output = Path(fpath)
-        if output.exists():
-            os.remove(output)
-
-        fpath = os.path.join(analyst_path, event_name + "_analyst.log")
-        output = Path(fpath)
-        if output.exists():
-            os.remove(output)
-
-        files_to_remove = [
-            "PSPL_no_blend_no_piE.html",
-            "PSPL_blend_no_piE.html",
-            "PSPL_blend_piE.html",
-            "PSPL_blend_piE_p.html",
-            "PSPL_blend_piE_n.html",
-            "PSPL_no_blend_piE.html",
-        ]
-        for element in files_to_remove:
-            fpath = os.path.join(analyst_path, element)
-            output = Path(fpath)
-            if output.exists():
-                os.remove(output)
-
-        if event_name == "GDR3_ULENS_025":
-            files_to_remove = [
-                "GDR3_ULENS_025_PSPL_blend_piE_n_CMD_Gaia_DR3_Gaia_BP.html",
-                "GDR3_ULENS_025_PSPL_blend_piE_n_CMD_Gaia_DR3_Gaia_G.html",
-                "GDR3_ULENS_025_PSPL_blend_piE_n_CMD_Gaia_DR3_Gaia_RP.html",
-            ]
-            for element in files_to_remove:
-                fpath = os.path.join(analyst_path, element)
-                output = Path(fpath)
-                if output.exists():
-                    os.remove(output)
+    # # Remove created files
+    # for case in [scenario_file_cat, scenario_kwu, scenario_gsa]:
+    #     analyst_path = case.get("analyst_path")
+    #     event_name = case.get("event_name")
+    #
+    #     fpath = os.path.join(analyst_path, "fit_results.json")
+    #     output = Path(fpath)
+    #     if output.exists():
+    #         os.remove(output)
+    #
+    #     fpath = os.path.join(analyst_path, "fit_stats.txt")
+    #     output = Path(fpath)
+    #     if output.exists():
+    #         os.remove(output)
+    #
+    #     fpath = os.path.join(analyst_path, event_name + "_analyst.log")
+    #     output = Path(fpath)
+    #     if output.exists():
+    #         os.remove(output)
+    #
+    #     files_to_remove = [
+    #         "PSPL_no_blend_no_piE.html",
+    #         "PSPL_blend_no_piE.html",
+    #         "PSPL_blend_piE.html",
+    #         "PSPL_blend_piE_p.html",
+    #         "PSPL_blend_piE_n.html",
+    #         "PSPL_no_blend_piE.html",
+    #     ]
+    #     for element in files_to_remove:
+    #         fpath = os.path.join(analyst_path, element)
+    #         output = Path(fpath)
+    #         if output.exists():
+    #             os.remove(output)
+    #
+    #     if event_name == "GDR3_ULENS_025":
+    #         files_to_remove = [
+    #             "GDR3_ULENS_025_PSPL_blend_piE_n_CMD_Gaia_DR3_Gaia_BP.html",
+    #             "GDR3_ULENS_025_PSPL_blend_piE_n_CMD_Gaia_DR3_Gaia_G.html",
+    #             "GDR3_ULENS_025_PSPL_blend_piE_n_CMD_Gaia_DR3_Gaia_RP.html",
+    #         ]
+    #         for element in files_to_remove:
+    #             fpath = os.path.join(analyst_path, element)
+    #             output = Path(fpath)
+    #             if output.exists():
+    #                 os.remove(output)

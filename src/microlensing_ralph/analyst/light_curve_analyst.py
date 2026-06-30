@@ -139,7 +139,7 @@ class LightCurveAnalyst(BaseAnalyst):
 
         return final_mask
 
-    def flag_negative_errorbars(self, light_curve):
+    def flag_negative_errors(self, light_curve):
         """
         Flags entries with negative errors.
 

@@ -110,6 +110,9 @@ class FitAnalyst(BaseAnalyst):
         self.outlier_results = outlier_results
         self.outlier_seqs = outlier_seqs
 
+        self.anomaly_results = {}
+        self.anomaly_seqs = []
+
         if config_dict is not None:
             self.config = self.parse_config(config_dict=config_dict)
             self.add_fit_config(config_dict)
@@ -145,6 +148,8 @@ class FitAnalyst(BaseAnalyst):
         self.config["return_all_models"] = config["fit_analyst"].get(
             "return_all_models", True
         )
+
+        self.config["anomaly_finder"] = config["fit_analyst"].get("anomaly_finder", None)
 
         params = {}
         model_fit_config = config["fit_analyst"].get("model_fit_configuration")
@@ -578,12 +583,14 @@ class FitAnalyst(BaseAnalyst):
             self.perform_ongoing_fit(t_0)
             self.best_model = self.evaluate_models()
             # perform anomaly finder on best model
+            self.perform_anomaly_finding()
 
         else:
             self.log.info("Fit Analyst: Performing a finished event fit.")
             self.perform_finished_fit_pspl(t_0)
             self.best_model = self.evaluate_models()
             # perform anomaly finder on best model
+            self.perform_anomaly_finding()
             # if anomaly: perform_finished_fit_multiple()
             # else if peak covered: perform_finished_FSPL()
             # evaluate models
@@ -660,3 +667,42 @@ class FitAnalyst(BaseAnalyst):
             self.best_results = dict_to_save
 
         return self.best_results
+
+    def perform_anomaly_finding(self):
+        """
+        Anomaly Finding routine.
+
+        :param method: Method to perform anomaly finding.
+        :type method: str
+        """
+
+        af_method = self.config["anomaly_finder"].get("method", None)
+        af_fit_package = self.config["anomaly_finder"].get("fitting_package", None)
+
+        if af_method == 'hampel':
+            # Perform anomaly finding using the Hampel filter
+            best_model = self.best_results[self.best_model]
+            model_tag = self.best_model.split("_")[0]
+            # find residuals of best model
+            if af_fit_package is not None:
+                self.log.info(f"Fit Analyst: Using fitting setup specified by the User: {af_fit_package}.")
+                if af_fit_package == "pyLIMA":
+                    fit = pylima.fit_pylima.FitPylima(self.log)
+                    residuals = fit.get_best_model_residuals(
+                        model_tag,
+                        self.config["ra"], self.config["dec"],
+                        best_model,
+                        self.light_curves)
+
+            hampel_setup = self.config["anomaly_finder"].get("af_setup", None)
+            window = hampel_setup.get("window", None)
+            n_sigma = hampel_setup.get("n_sigma", None)
+            use_weight = hampel_setup.get("use_weighted", None)
+
+            for tag in residuals:
+                res = np.array(residuals[tag])
+                result_tag = analyst_tools.hampel_filter(res, window, n_sigma, use_weight)
+                self.anomaly_results[tag] = result_tag
+
+            # vet anomaly results in residuals
+            #    self.anomaly_seqs = []

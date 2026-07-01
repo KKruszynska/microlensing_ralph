@@ -9,6 +9,8 @@ from microlensing_ralph.analyst import analyst_tools
 from microlensing_ralph.analyst.analyst import BaseAnalyst
 from microlensing_ralph.fitting_support import pylima
 
+from microlensing_ralph.toolbox.output_tools import plot_outlier_results
+
 
 class FitAnalyst(BaseAnalyst):
     """
@@ -111,7 +113,7 @@ class FitAnalyst(BaseAnalyst):
         self.outlier_seqs = outlier_seqs
 
         self.anomaly_results = {}
-        self.anomaly_seqs = []
+        self.anomaly_seqs = {}
 
         if config_dict is not None:
             self.config = self.parse_config(config_dict=config_dict)
@@ -705,4 +707,31 @@ class FitAnalyst(BaseAnalyst):
                 self.anomaly_results[tag] = result_tag
 
             # vet anomaly results in residuals
-            #    self.anomaly_seqs = []
+            for tag in residuals:
+                outlier_flags =self.anomaly_results[tag]["is_outlier"]
+                res = np.array(residuals[tag])
+                self.anomaly_seqs[tag] = analyst_tools.vet_outliers(res, outlier_flags)
+
+            if self.config["anomaly_finder"].get("save_results", False):
+                self.log.info("Fit Analyst: Saving anomaly finder results.")
+                np.savez(
+                    os.path.join(self.analyst_path, "af_results.npz"),
+                    self.anomaly_results,
+                )
+
+                with open(os.path.join(self.analyst_path, "af_sequences.json"), "w", encoding="utf-8") as file:
+                    json.dump(self.anomaly_seqs, file, ensure_ascii=False, indent=4)
+
+                for tag in residuals:
+                    res = np.array(residuals[tag])
+                    af_res = self.anomaly_results[tag]
+                    af_seqs = self.anomaly_seqs[tag]
+                    output_fname = f"af_results_{tag}.html"
+                    plot_outlier_results(
+                        os.path.join(self.analyst_path, output_fname),
+                        f"Anomalies found for {tag} residuals",
+                        res,
+                        af_res,
+                        af_seqs,
+                    )
+                self.log.debug(f"Fit Analyst: Anomaly finder results saved.")

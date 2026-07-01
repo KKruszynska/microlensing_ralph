@@ -39,7 +39,7 @@ def plot_outlier_results(
     medians = outlier_results["medians"]
     thresholds = outlier_results["thresholds"]
 
-    output_file(filename=plot_location, title=f"Outliers for {plot_name}")
+    output_file(filename=plot_location, title=f"{plot_name}")
 
     p = figure(title="Outliers found by the Hampel filter",
                x_axis_label="JD", y_axis_label="mag",
@@ -93,6 +93,113 @@ def plot_outlier_results(
               legend_label=f"Outliers",
               marker="x",
               color="navy", size=8)
+
+    p.y_range.flipped = True
+
+    p.legend.location = "top_left"
+
+    save(p)
+
+
+def plot_anomaly_finding_results(
+        plot_location,
+        plot_name,
+        light_curves,
+        outlier_results=None,
+        outlier_sequence=None,
+        af_results=None,
+        af_sequence=None
+):
+    """
+    Plot anomaly finding results for all light curves
+    using bokeh plotting library, and then save it as an HTML file
+    at a location specified by `plot_location`.
+
+    :param plot_location: Location where the plot will be saved.
+    :type plot_location: str
+
+    :param plot_name: Name of the plot.
+    :type plot_name: str
+
+    :param lc: Light curves for the event.
+    :type lc: numpy array
+
+    :param outlier_results: A dictionary with outlier flagging results.
+        Contains four numpy arrays, see:
+        :meth:`microlensing_ralph.analyst.analyst_tools.hampel_filter`.
+    :type outlier_results: dict, optional
+
+    :param outlier_sequence: A list of dictionaries with found outlier sequences,
+        see :meth:`microlensing_ralph.analyst.analyst_tools.vet_outliers`.
+    :type outlier_sequence: dict
+
+    param af_results: A dictionary with anomaly finder results.
+        Contains four numpy arrays, see:
+        :meth:`microlensing_ralph.analyst.analyst_tools.hampel_filter`.
+    :type outlier_results: dict
+
+    :param af_sequence: A list of dictionaries with found anomaly, sequences,
+        see :meth:`microlensing_ralph.analyst.analyst_tools.vet_outliers`.
+    :type outlier_sequence: dict
+    """
+
+    p = figure(title="Anomalies and outliers found by the Hampel filter",
+               x_axis_label="JD", y_axis_label="mag",
+               width=1000, height=800
+               )
+
+    output_file(filename=plot_location, title=f"{plot_name}")
+
+    for entry in light_curves:
+        lc = np.array(entry["light_curve"])
+        mag_plot = np.linspace(np.min(lc[:,1]), np.max(lc[:,1]), 10)
+
+        out_sequence = outlier_sequence[tag]
+        for sequence in outlier_sequence:
+            t_start = sequence["t_start"]
+            t_end = sequence["t_end"]
+
+            p.harea(
+                x1=t_start,
+                x2=t_end,
+                y=mag_plot,
+                alpha=0.5,
+                fill_color="cornflowerblue",
+            )
+
+            p.vspan(
+                x=[t_start, t_end],
+                line_width=[2, 2],
+                line_color="cornflowerblue",
+            )
+
+
+    for entry in light_curves:
+        lc = np.array(entry["light_curve"])
+        tag = f"{entry["survey"]}_{entry["band"]}"
+        outliers = outlier_results[tag]["is_outlier"]
+        anomalies = af_results[tag]["is_outlier"]
+
+        p.scatter(lc[:,0], lc[:,1],
+                  legend_label=f"Cleaned {plot_name}",
+                  marker="circle",
+                  color="#DB8C1D", size=8)
+
+        # create the coordinates for the errorbars
+        err_xs = []
+        err_ys = []
+
+        for x, y, yerr in zip(lc[:,0], lc[:,1], lc[:,2]):
+            err_xs.append((x, x))
+            err_ys.append((y - yerr, y + yerr))
+
+        # plot them
+        p.multi_line(err_xs, err_ys, color='#DB8C1D')
+
+        p.scatter(lc[outliers,0], lc[outliers,1],
+                  legend_label=f"Outliers",
+                  marker="x",
+                  color="navy", size=8)
 
     p.y_range.flipped = True
 

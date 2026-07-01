@@ -271,7 +271,7 @@ class LightCurveAnalyst(BaseAnalyst):
             lc = np.array(entry["light_curve"])
             if self.config["hampel"] is not None:
                 self.outlier_results[f"{entry["survey"]}_{entry["band"]}"] = (
-                    self.hampel_filter(
+                    hampel_filter(
                         lc,
                         window=self.config["hampel"].get("window", "3D"),
                         n_sigma=self.config["hampel"].get("n_sigma", 5.0),
@@ -295,6 +295,7 @@ class LightCurveAnalyst(BaseAnalyst):
             )
 
         if self.config["save_outlier_results"]:
+            self.log.info("LC Analyst: Saving outlier results.")
             np.savez(
                 os.path.join(self.analyst_path, "outlier_results.npz"),
                 self.outlier_results,
@@ -302,7 +303,6 @@ class LightCurveAnalyst(BaseAnalyst):
 
             with open(os.path.join(self.analyst_path, "outlier_sequences.json"), "w", encoding="utf-8") as file:
                 json.dump(self.outlier_seqs, file, ensure_ascii=False, indent=4)
-            self.log.debug(f"LC Analyst: Outlier analysis results saved.")
 
             for entry in self.light_curves:
                 lc = np.array(entry["light_curve"])
@@ -311,11 +311,12 @@ class LightCurveAnalyst(BaseAnalyst):
                 output_fname = f"outlier_results_{entry["survey"]}_{entry["band"]}.html"
                 plot_outlier_results(
                     os.path.join(self.analyst_path, output_fname),
-                    f"{entry["survey"]}_{entry["band"]}",
+                    f"Outliers found for {entry["survey"]}_{entry["band"]}",
                     lc,
                     outlier_res,
                     outlier_seqs,
                 )
+            self.log.debug(f"LC Analyst: Outlier analysis results saved.")
 
         self.log.info("LC Analyst: Outlier check ended.")
         return self.outlier_results, self.outlier_seqs

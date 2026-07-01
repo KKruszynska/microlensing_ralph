@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from microlensing_ralph.analyst.event_analyst import EventAnalyst
+from microlensing_ralph.analyst.fit_analyst import FitAnalyst
 
 ralph_output = os.path.join("tests", "microlensing_ralph", "data", "output")
 ralph_input = os.path.join("tests", "microlensing_ralph", "data", "input")
@@ -301,36 +302,33 @@ scenario_roman = {
             "method": "hampel",
             "fitting_package": "pyLIMA",
             "min_seq_length": 5,
+            "save_results": True,
             "af_setup": {
-                "window": "1D",
-                "n_sigma": 3.0,
-                "use_weighted": False,
+                "window": "3D",
+                "n_sigma": 2.0,
+                "use_weighted": True,
             },
         },
         "model_fit_configuration": {
             "PSPL_no_blend_no_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "TRF",
-                # "fitting_method_args": {
-                #     "DE_population": 10,
-                #     "loss_function": "soft_l1",
-                # },
                 "boundaries": {
-                    "u0": [0.0, 1.0],
+                    "u0": [0.0, 2.0],
                 }
             },
             "PSPL_blend_no_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "TRF",
                 "boundaries": {
-                    "u0": [-1.0, 1.0],
+                    "u0": [0.0, 2.0],
                 }
             },
             "PSPL_blend_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "TRF",
                 "boundaries": {
-                    "u0": [-1.0, 1.0],
+                    "u0": [-2.0, 2.0],
                     "piEN": [-1.0, 1.0],
                     "piEE": [-1.0, 1.0],
                 }
@@ -339,12 +337,12 @@ scenario_roman = {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "TRF",
                 "boundaries": {
-                    "u0": [-1.0, 1.0],
+                    "u0": [-2.0, 2.0],
                     "piEN": [-1.0, 1.0],
                     "piEE": [-1.0, 1.0],
                 }
             },
-        }
+        },
     },
     "light_curves": [
         {
@@ -353,6 +351,47 @@ scenario_roman = {
             "path": os.path.join(ralph_light_curves, "ulwdc1_018_W149.txt"),
         },
     ],
+    "best_model": "PSPL_blend_piE_p",
+    "best_results": {
+        "PSPL_blend_piE_p": {
+            "t0_par": 2458752,
+            "t0": 2458743.906,
+            "t0_error": 0.026,
+            "u0": 0.01155,
+            "u0_error": 0.00092,
+            "tE": 1000.0,
+            "tE_error": 79.807,
+            "piEN": -0.40413,
+            "piEN_error": 0.03165,
+            "piEE": -0.17856,
+            "piEE_error": 0.01415,
+            "fsource_Roman_W149": 2.92895,
+            "fsource_Roman_W149_error": 0.23624,
+            "fsource_Roman_W149_mag": 26.233,
+            "fsource_Roman_W149_mag_error": 0.088,
+            "ftotal_Roman_W149": 991.89766,
+            "ftotal_Roman_W149_error": 0.07052,
+            "ftotal_Roman_W149_mag": 19.909,
+            "ftotal_Roman_W149_mag_error": 0.0,
+            "chi2": 180988.529,
+            "fblend_Roman_W149": 988.96871,
+            "fblend_Roman_W149_error": 0.24654088504749067,
+            "fblend_Roman_W149_mag": 19.912,
+            "fblend_Roman_W149_mag_error": 0.0,
+            "source_magnitude": 26.233,
+            "source_mag_error": 0.088,
+            "blend_magnitude": 19.912,
+            "blend_mag_error": 0.0,
+            "baseline_magnitude": 19.909,
+            "baseline_mag_error": 0.0,
+            "red_chi2": 4.716,
+            "sw_test": 0.45,
+            "ad_test": 2922.717,
+            "ks_test": 0.024,
+            "aic_test": 181002.529,
+            "bic_test": 181062.417
+        },
+    },
 }
 
 class EventAnalystTest:
@@ -523,6 +562,39 @@ class EventAnalystTest:
             if not np.isnan(received):
                 assert (lower <= received <= upper)
 
+    def test_anomaly_finder(self):
+        """
+        Test running an anomaly finder with Hampel filter.
+        """
+
+        event_name = self.scenario.get("event_name")
+        analyst_path = self.scenario.get("analyst_path")
+        event_analyst = EventAnalyst(
+            event_name, analyst_path, "debug", config_dict=self.scenario, stream=False
+        )
+        event_analyst.run_lc_analyst()
+        fit_analyst = FitAnalyst(
+            event_analyst.event_name, event_analyst.analyst_path, event_analyst.light_curves, event_analyst.log,
+            outlier_results=event_analyst.outlier_results, outlier_seqs=event_analyst.outlier_seqs,
+            config_dict=event_analyst.config
+        )
+
+        for entry in fit_analyst.light_curves:
+            # extract np array with the light curve
+            lc_tag = f"{entry["survey"]}_{entry["band"]}"
+            lc = np.array(entry["light_curve"])
+            if lc_tag in fit_analyst.outlier_results:
+                outlier_flags =  fit_analyst.outlier_results[lc_tag]["is_outlier"]
+                entry["light_curve_with_outliers"] = lc
+                entry["light_curve"] = lc[~outlier_flags]
+
+        fit_analyst.best_model = self.scenario.get("best_model")
+        fit_analyst.best_results = self.scenario.get("best_results")
+
+        fit_analyst.perform_anomaly_finding()
+
+
+
     @pytest.mark.skip(reason="This test is for debugging code only")
     def test_no_config(self):
         """
@@ -551,7 +623,7 @@ def test_run():
     #     test.test_run_analyst_dict()
 
     test = EventAnalystTest(scenario_roman)
-    test.test_run_analyst_dict()
+    test.test_anomaly_finder()
 
     # # Remove created files
     # for case in [scenario_file_cat, scenario_kwu, scenario_gsa]:

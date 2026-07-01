@@ -469,7 +469,6 @@ class FitPylima(Fitter):
         """
 
         pylima_parameters = model.compute_pyLIMA_parameters(parameters)
-
         # plot aligned data
         list_of_telescopes = create_telescopes_to_plot_model(model, pylima_parameters)
 
@@ -586,14 +585,16 @@ class FitPylima(Fitter):
             possible_keys.append(f"ftotal_{lc_tag}")
 
         event_parameters = []
+        event_keys = []
         for par in possible_keys:
             if par in model_parameters:
                 if "err" not in par:
                     if "mag" not in par:
                         event_parameters.append(model_parameters[par])
+                        event_keys.append(par)
 
         if model_tag == "PSPL":
-            if "piEN" in event_parameters:
+            if "piEN" in event_keys:
                 model = PSPL_model.PSPLmodel(
                     event, parallax=["Full", int(model_parameters["t0_par"])],
                     blend_flux_parameter="ftotal"

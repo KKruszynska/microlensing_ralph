@@ -4,6 +4,7 @@ from pyLIMA.fits import DE_fit, TRF_fit, stats
 from pyLIMA.fits.objective_functions import photometric_residuals_in_magnitude
 from pyLIMA.models import PSPL_model
 from pyLIMA.outputs.pyLIMA_plots import create_telescopes_to_plot_model
+from pyLIMA.simulations import simulator
 
 from microlensing_ralph.fitting_support.fitter import Fitter
 from microlensing_ralph.fitting_support.pylima import plots_pylima
@@ -447,7 +448,7 @@ class FitPylima(Fitter):
 
         return model_params
 
-    def get_aligned_data(self, model, parameters):
+    def get_aligned_data(self, model, parameters, format_res=False):
         """
         Returns light curve aligned to the best fitting model, and its residuals.
         Taken from pyLIMA.outputs.pyLIMA_plots
@@ -457,6 +458,10 @@ class FitPylima(Fitter):
 
         :param parameters: A dictionary with parameters of a pyLIMA model.
         :type parameters: dict
+
+        :param format_res: If `True`, instead of returning a list of numpy arrays,
+            residuals will be returned as a dictionary with tags of light curves,
+            and their corresponding residuals.
 
         :return: A list with numpy arrays containing light curve data aligned to a model
             and its residuals.
@@ -487,7 +492,10 @@ class FitPylima(Fitter):
             ref_fluxes.append([f_source, f_blend])
 
         aligned_data = []
-        residuals = []
+        if format_res:
+            residuals = {}
+        else:
+            residuals = []
         # reference_source, reference_blend = 0., 0.
         for ind, tel in enumerate(model.event.telescopes):
             if tel.lightcurve["flux"] is not None:
@@ -526,9 +534,79 @@ class FitPylima(Fitter):
                 )
 
                 aligned_data.append(aligned_magnitude.T)
-                residuals.append(res_magnitude.T)
+
+                if format_res:
+                    residuals[tel.name] = res_magnitude.T
+                else:
+                    residuals.append(res_magnitude.T)
 
         return aligned_data, residuals
+
+    def get_best_model_residuals(self, model_tag,
+                     ra, dec,
+                     model_parameters,
+                     light_curves
+                     ):
+        """
+        Returns residuals of the best-fitting model.
+
+        :param model_tag: Model type (`PSPL` for point lens-point source or `USBL`
+            for binary lens-uniform source).
+        :type model_tag: str
+
+        :param ra: Right Ascension in degrees.
+        :type ra: float
+
+        :param dec: Declination in degrees.
+        :type dec: float
+
+        :param model_parameters: Parameters of best-fitting model.
+        :type model_parameters: dict
+
+        :param light_curves: A list of dictionaries with event name, light curve, survey name, filter name,
+            and, if available, an ephemeris of the space observatory which was used to obtain the observations.
+        :type light_curves: list
+
+        :return: A dictionary with light curve tags and corresponding residuals of the best-fitting model.
+        :rtype: dict
+        """
+
+        # Setup event
+        ra, dec = ra, dec
+        event = self.setup_event(model_tag, ra, dec, light_curves)
+
+        model_keys = {
+            'PSPL': ["t0", "u0", "tE", "rho", "piEN", "piEE"],
+            'USBL': ["t0", "u0", "tE", "rho", "separation", "mass_ratio", "alpha", "piEN", "piEE"],
+        }
+        possible_keys = model_keys[model_tag]
+        for tel in event.telescopes:
+            lc_tag = tel.name
+            possible_keys.append(f"fsource_{lc_tag}")
+            possible_keys.append(f"ftotal_{lc_tag}")
+
+        event_parameters = []
+        for par in possible_keys:
+            if par in model_parameters:
+                if "err" not in par:
+                    if "mag" not in par:
+                        event_parameters.append(model_parameters[par])
+
+        if model_tag == "PSPL":
+            if "piEN" in event_parameters:
+                model = PSPL_model.PSPLmodel(
+                    event, parallax=["Full", int(model_parameters["t0_par"])],
+                    blend_flux_parameter="ftotal"
+                )
+            else:
+                model = PSPL_model.PSPLmodel(event, parallax=["None", 0.0], blend_flux_parameter="ftotal")
+
+        norm_data, residuals = self.get_aligned_data(model, event_parameters, format_res=True)
+
+        return residuals
+
+
+
 
 
 def return_baseline_mag(mag_source, err_mag_source, mag_blend, err_mag_blend, log):
@@ -619,3 +697,43 @@ def return_blend_mag(mag_source, err_mag_source, mag_base, err_mag_base, log):
         log.error(f"Fit Analyst -- pyLIMA: {err}, {type(err)}")
 
     return blend_mag, err_blend_mag
+
+# class SimPylima(Fitter):
+#     """
+#     Class to simulate a pylima model and get residuals of the light curve for that model.
+#     """
+#
+#     def __init__(self, log):
+#         super().__init__(log)
+#
+#     def set_up_simulator(self, model_tag,
+#                          ra, dec,
+#                          model_parameters,
+#                          light_curves
+#                          ):
+#         """
+#         Sets up the pylima simulator.
+#         """
+#
+#
+#
+#         sim_event = event.Event(ra=ra, dec=dec)
+#         for entry in light_curves:
+#             lc_tag = f"{entry["survey"]}_{entry["band"]}"
+#             lc_tags.append(lc_tag)
+#
+#             lc = np.array(entry["light_curve"])
+#             time_grid = lc[:,0]
+#
+#             sim_tel = simulator.simulate_a_telescope(name=lc_tag,                                                  location='Earth',
+#                                                    timestamps=time_grid,
+#                                                    astrometry=False
+#                                                    )
+
+
+
+
+
+
+
+

@@ -297,30 +297,40 @@ scenario_roman = {
         "ongoing_magnification_threshold": 1.10,
         "ongoing_amplitude_threshold": 1.0,
         "return_all_models": True,
+        "anomaly_finder": {
+            "method": "hampel",
+            "fitting_package": "pyLIMA",
+            "min_seq_length": 5,
+            "af_setup": {
+                "window": "1D",
+                "n_sigma": 3.0,
+                "use_weighted": False,
+            },
+        },
         "model_fit_configuration": {
             "PSPL_no_blend_no_piE": {
                 "fitting_package": "pyLIMA",
-                "fitting_method": "DE",
-                "fitting_method_args": {
-                    "DE_population": 10,
-                    "loss_function": "soft_l1",
-                },
+                "fitting_method": "TRF",
+                # "fitting_method_args": {
+                #     "DE_population": 10,
+                #     "loss_function": "soft_l1",
+                # },
                 "boundaries": {
-                    "u0": [0.0, 2.0],
+                    "u0": [0.0, 1.0],
                 }
             },
             "PSPL_blend_no_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "TRF",
                 "boundaries": {
-                    "u0": [-2.0, 2.0],
+                    "u0": [-1.0, 1.0],
                 }
             },
             "PSPL_blend_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "TRF",
                 "boundaries": {
-                    "u0": [-2.0, 2.0],
+                    "u0": [-1.0, 1.0],
                     "piEN": [-1.0, 1.0],
                     "piEE": [-1.0, 1.0],
                 }
@@ -329,7 +339,7 @@ scenario_roman = {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "TRF",
                 "boundaries": {
-                    "u0": [-2.0, 2.0],
+                    "u0": [-1.0, 1.0],
                     "piEN": [-1.0, 1.0],
                     "piEE": [-1.0, 1.0],
                 }

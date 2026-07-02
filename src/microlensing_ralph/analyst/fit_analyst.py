@@ -559,7 +559,6 @@ class FitAnalyst(BaseAnalyst):
         :rtype: dict
         """
 
-        # TODO: Add Hampel filter for residuals of best fitting model.
         # TODO: Add sorting input into a pd.DataFrame required by SIGNALMEN and check if
         #       outlier sequences are occurring at the same time.
 
@@ -585,14 +584,16 @@ class FitAnalyst(BaseAnalyst):
             self.perform_ongoing_fit(t_0)
             self.best_model = self.evaluate_models()
             # perform anomaly finder on best model
-            self.perform_anomaly_finding()
+            if self.config.get("anomaly_finder", None) is not None:
+                self.perform_anomaly_finding()
 
         else:
             self.log.info("Fit Analyst: Performing a finished event fit.")
             self.perform_finished_fit_pspl(t_0)
             self.best_model = self.evaluate_models()
             # perform anomaly finder on best model
-            self.perform_anomaly_finding()
+            if self.config.get("anomaly_finder", None) is not None:
+                self.perform_anomaly_finding()
             # if anomaly: perform_finished_fit_multiple()
             # else if peak covered: perform_finished_FSPL()
             # evaluate models

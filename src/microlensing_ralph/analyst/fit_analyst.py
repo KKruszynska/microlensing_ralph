@@ -734,5 +734,6 @@ class FitAnalyst(BaseAnalyst):
                         res,
                         af_res,
                         af_seqs,
+                        to_mjd=self.config["anomaly_finder"].get("to_MJD", False)
                     )
                 self.log.debug(f"Fit Analyst: Anomaly finder results saved.")

@@ -315,6 +315,7 @@ class LightCurveAnalyst(BaseAnalyst):
                     lc,
                     outlier_res,
                     outlier_seqs,
+                    to_mjd=self.config.get("to_MJD", False)
                 )
             self.log.debug(f"LC Analyst: Outlier analysis results saved.")
 

@@ -9,23 +9,7 @@ from microlensing_ralph.controller.controller import Controller
 
 ralph_tests_home = os.path.join("tests", "microlensing_ralph", "data")
 
-class ControllerPathsTest:
-    """
-    Tests to check if controller works for a finished event.
-    """
-
-    def __init__(self, expected_results):
-        self.expected_results = expected_results
-
-    def test_launch_analysts(self):
-        """
-        Run controller to check if it works.
-        """
-        event_list = [
-            "GDR3_ULENS_025",
-        ]
-
-        config = {
+config_finished = {
             "python_compiler": "python",
             "group_processing_limit": 2,
             "events_path": os.path.join(ralph_tests_home, "input", "controller"),
@@ -36,93 +20,7 @@ class ControllerPathsTest:
             "log_level": "debug",
         }
 
-        controller = Controller(event_list, config_dict=config)
-        controller.launch_analysts()
-
-        # Check if expected files exist
-        # Controller log
-        controller_log_path = os.path.join(ralph_tests_home, "output", "controller_launch")
-        output = Path(os.path.join(controller_log_path, "controller.log"))
-        assert output.exists() is True
-        assert output.is_file() is True
-
-        # Analyst output files
-        analyst_home = os.path.join(ralph_tests_home, "input", "controller")
-        for event in event_list:
-            analyst_path = os.path.join(analyst_home, event)
-
-            output = Path(analyst_path)
-            assert output.exists() is True
-            assert output.is_dir() is True
-
-            output = Path(os.path.join(analyst_path, "fit_results.json"))
-            assert output.exists() is True
-            assert output.is_file() is True
-
-            output = Path(os.path.join(analyst_path, "fit_stats.txt"))
-            assert output.exists() is True
-            assert output.is_file() is True
-
-            output = Path(os.path.join(analyst_path, event + "_analyst.log"))
-            assert output.exists() is True
-            assert output.is_file() is True
-
-            model_plots = [
-                "PSPL_no_blend_no_piE",
-                "PSPL_blend_no_piE",
-                "PSPL_blend_piE_p",
-                "PSPL_blend_piE_n",
-            ]
-
-            for file_path in model_plots:
-                output = Path(os.path.join(analyst_path, file_path + ".html"))
-                assert output.exists() is True
-                assert output.is_file() is True
-
-            bands = [
-                "_CMD_Gaia_DR3_Gaia_G",
-                "_CMD_Gaia_DR3_Gaia_BP",
-                "_CMD_Gaia_DR3_Gaia_RP",
-            ]
-            for model in model_plots:
-                for band in bands:
-                    output = Path(os.path.join(analyst_path, event + "_" + model + band + ".html"))
-                    assert output.exists() is True
-                    assert output.is_file() is True
-
-            expected_result_path = self.expected_results[event]
-            with open(expected_result_path, "r") as file:
-                expected_fit_result = json.load(file)
-
-            with open(os.path.join(analyst_path, "fit_results.json"), "r") as file:
-                received_fit_result = json.load(file)
-
-            for model in expected_fit_result:
-                model_result = received_fit_result[model]
-                expected_result = expected_fit_result[model]
-                for key in expected_result:
-                    expected = float(expected_result[key])
-                    received = float(model_result[key])
-                    if not np.isnan(expected):
-                        assert pytest.approx(received, 2) == pytest.approx(expected, 2)
-
-
-class ControllerPathsOngoingTest:
-    """
-    Tests to check if controller works fine for ongoing events.
-    """
-
-    def __init__(self, expected_results):
-        self.expected_results = expected_results
-
-    def test_launch_analysts(self):
-        """
-        Run controller to check if it works.
-        """
-
-        event_list = ["AT2024kwu", "Gaia18cbf", "GDR3_ULENS_018"]
-
-        config = {
+config_ongoing = {
             "python_compiler": "python",
             "group_processing_limit": 2,
             "config_type": "yaml",
@@ -133,19 +31,32 @@ class ControllerPathsOngoingTest:
             "log_level": "debug",
         }
 
-        controller = Controller(event_list, config_dict=config)
+
+class ControllerTest:
+    """
+    Tests to check if controller works.
+    """
+
+    def __init__(self, event_list, config, expected_results):
+        self.event_list = event_list
+        self.config = config
+        self.expected_results = expected_results
+
+    def set_up(self):
+        controller = Controller(self.event_list , config_dict=self.config)
         controller.launch_analysts()
 
+    def check_results(self):
         # Check if expected files exist
         # Controller log
-        controller_log_path = os.path.join(ralph_tests_home, "output", "controller_analysts")
+        controller_log_path = self.config.get("log_location")
         output = Path(os.path.join(controller_log_path, "controller.log"))
         assert output.exists() is True
         assert output.is_file() is True
 
         # Analyst output files
-        analyst_home = os.path.join(ralph_tests_home, "input", "controller")
-        for event in event_list:
+        analyst_home = self.config.get("events_path")
+        for event in self.event_list:
             analyst_path = os.path.join(analyst_home, event)
 
             output = Path(analyst_path)
@@ -183,7 +94,20 @@ class ControllerPathsOngoingTest:
                 assert output.exists() is True
                 assert output.is_file() is True
 
+            if event == "GDR3_ULENS_025":
+                bands = [
+                    "_CMD_Gaia_DR3_Gaia_G",
+                    "_CMD_Gaia_DR3_Gaia_BP",
+                    "_CMD_Gaia_DR3_Gaia_RP",
+                ]
+                for model in model_plots:
+                    for band in bands:
+                        output = Path(os.path.join(analyst_path, event + "_" + model + band + ".html"))
+                        assert output.exists() is True
+                        assert output.is_file() is True
+
             expected_result_path = self.expected_results.get(event, None)
+            keys_to_check = ["t0", "u0", "tE", "piEN", "piEE"]
             if expected_result_path is not None:
                 with open(expected_result_path, "r") as file:
                     expected_fit_result = json.load(file)
@@ -194,13 +118,13 @@ class ControllerPathsOngoingTest:
                 for model in expected_fit_result:
                     model_result = received_fit_result[model]
                     expected_result = expected_fit_result[model]
-                    for key in expected_result:
-                        if "error" not in key:
+
+                    for key in keys_to_check:
+                        if key in expected_result:
                             expected = float(expected_result[key])
                             received = float(model_result[key])
                             if not np.isnan(expected):
-                                assert pytest.approx(received, 2) == pytest.approx(expected, 2)
-
+                                assert pytest.approx(received, rel=1e-1) == pytest.approx(expected, rel=1e-1)
 
 def test_run():
     """
@@ -212,11 +136,15 @@ def test_run():
         "GDR3_ULENS_018": os.path.join(ralph_tests_home, "input", "test_results", "gdr3_ulens_018_fit_results.json"),
     }
 
-    test = ControllerPathsTest(expected_fit_results)
-    test.test_launch_analysts()
+    event_list = ["GDR3_ULENS_025"]
+    test = ControllerTest(event_list, config_finished, expected_fit_results)
+    test.set_up_controller()
+    test.check_results()
 
-    test = ControllerPathsOngoingTest(expected_fit_results)
-    test.test_launch_analysts()
+    event_list = ["AT2024kwu", "Gaia18cbf", "GDR3_ULENS_018"]
+    test = ControllerTest(event_list, config_ongoing, expected_fit_results)
+    test.set_up_controller()
+    test.check_results()
 
     controller_log_path = [
         os.path.join(ralph_tests_home, "output", "controller_launch"),

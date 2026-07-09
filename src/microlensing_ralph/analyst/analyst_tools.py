@@ -245,7 +245,7 @@ def check_ongoing_magnification(threshold, model_params, time_now):
 
     return ongoing
 
-def hampel_filter(light_curve, window='3D', n_sigma=3.0, use_weighted=False):
+def hampel_filter(light_curve, window='3D', n_sigma=5.0, use_weighted=False):
     """
     A Hampel filter with a time-based window. More about Hampel filter can be
     found [here](https://medium.com/@migueloteropedrido/hampel-filter-with-python-17db1d265375).

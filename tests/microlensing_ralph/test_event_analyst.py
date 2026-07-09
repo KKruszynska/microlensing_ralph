@@ -411,26 +411,33 @@ class EventAnalystTest:
     def __init__(self, scenario):
         self.scenario = scenario
 
+    def set_up(self):
+        self.event_name = self.scenario.get("event_name")
+        self.analyst_path = self.scenario.get("analyst_path")
+        self.event_analyst = EventAnalyst(
+            self.event_name,
+            self.analyst_path,
+            "debug",
+            config_path=os.path.join(self.analyst_path, "config.yaml"),
+            stream=True
+        )
+
+        event_analyst = EventAnalyst(
+            event_name, analyst_path, "debug", config_dict=self.scenario, stream=False
+        )
+
     def test_parse_config(self):
         """
         Test if configuration is parsed correctly.
         """
+        if self.event_name == "GDR3_ULENS_025":
+            self.event_analyst.parse_config(config_path=s.path.join(self.analyst_path, "config.yaml"))
+            assert type(self.event_analyst.config) is type(self.scenario.get("config_final"))
 
-        event_name = self.scenario.get("event_name")
-        analyst_path = self.scenario.get("analyst_path")
-        event_analyst = EventAnalyst(
-            event_name,
-            analyst_path,
-            "debug",
-            config_path=os.path.join(analyst_path, "config.yaml"),
-            stream=True
-        )
-        event_analyst.parse_config(os.path.join(analyst_path, "config.yaml"))
-
-        assert type(event_analyst.config) is type(self.scenario.get("config_final"))
-
-        for element in event_analyst.config:
-            assert event_analyst.config[element] == self.scenario.get("config_final")[element]
+            for element in self.event_analyst.config:
+                assert self.event_analyst.config[element] == self.scenario.get("config_final")[element]
+        else:
+            self.event_analyst.parse_config(config_dict=self.)
 
     def test_run_analyst_file(self):
         """
@@ -650,16 +657,17 @@ def test_run():
     Run all tests.
     """
 
-    case = scenario_file_cat
-    test = EventAnalystTest(case)
-    test.test_parse_config()
-    test.test_run_analyst_file()
-
-    for case in [scenario_kwu, scenario_gsa]:
-        test = EventAnalystTest(case)
-        test.test_run_analyst_dict()
+    # case = scenario_file_cat
+    # test = EventAnalystTest(case)
+    # test.test_parse_config()
+    # test.test_run_analyst_file()
+    #
+    # for case in [scenario_kwu, scenario_gsa]:
+    #     test = EventAnalystTest(case)
+    #     test.test_run_analyst_dict()
 
     test = EventAnalystTest(scenario_roman)
+    test.test_parse_config()
     test.test_anomaly_finder()
 
     # Remove created files

@@ -245,7 +245,7 @@ class FitPylima(Fitter):
                 start_guess.append(starting_params[key])
         fit_event.model_parameters_guess = start_guess
 
-        self.log.info("Fit Analyst -- pyLIMA: Staring fit.")
+        self.log.info("Fit Analyst -- pyLIMA: Starting fit.")
         fit_event.fit()
         self.log.info("Fit Analyst -- pyLIMA: Fitting finished")
 

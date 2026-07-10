@@ -138,12 +138,12 @@ def test_run():
 
     event_list = ["GDR3_ULENS_025"]
     test = ControllerTest(event_list, config_finished, expected_fit_results)
-    test.set_up_controller()
+    test.set_up()
     test.check_results()
 
     event_list = ["AT2024kwu", "Gaia18cbf", "GDR3_ULENS_018"]
     test = ControllerTest(event_list, config_ongoing, expected_fit_results)
-    test.set_up_controller()
+    test.set_up()
     test.check_results()
 
     controller_log_path = [

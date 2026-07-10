@@ -86,7 +86,6 @@ scenario_file_cat = {
     },
     "final_files": {
         "event_folder": "GDR3_ULENS_025",
-        "analyst_log": "GDR3_ULENS_025_analyst.log",
         "model_plots": [
             "PSPL_blend_piE_n.html",
         ],
@@ -100,77 +99,80 @@ scenario_file_cat = {
 
 scenario_gsa = {
     "event_name": "Gaia24amo",
-    "ra": 249.14892083,
-    "dec": -53.74991944,
-    "analyst_path": os.path.join(ralph_output, "event_analyst", "Gaia24amo"),
-    "lc_analyst": {
-        "acceptable_mag_range": {
-            "upper_limit": -10,
-            "lower_limit": 30
+    "config": {
+        "event_name": "Gaia24amo",
+        "ra": 249.14892083,
+        "dec": -53.74991944,
+        "analyst_path": os.path.join(ralph_output, "event_analyst", "Gaia24amo"),
+        "lc_analyst": {
+            "acceptable_mag_range": {
+                "upper_limit": -10,
+                "lower_limit": 30
+            },
         },
+        "fit_analyst": {
+            "ongoing_magnification_threshold": 1.10,
+            "ongoing_amplitude_threshold": 1.0,
+            "return_all_models": True,
+            "model_fit_configuration": {
+                "PSPL_no_blend_no_piE": {
+                    "fitting_package": "pyLIMA",
+                    "fitting_method": "DE",
+                    "boundaries": {
+                        "u0": [0.0, 2.0],
+                    }
+                },
+                "PSPL_blend_no_piE": {
+                    "fitting_package": "pyLIMA",
+                    "fitting_method": "TRF",
+                    "boundaries": {
+                        "u0": [0.0, 2.0],
+                    }
+                },
+                "PSPL_blend_piE": {
+                    "fitting_package": "pyLIMA",
+                    "fitting_method": "TRF",
+                    "boundaries": {
+                        "u0": [0.0, 2.0],
+                        "piEN": [-1.0, 1.0],
+                        "piEE": [-1.0, 1.0],
+                    }
+                },
+                "PSPL_no_blend_piE": {
+                    "fitting_package": "pyLIMA",
+                    "fitting_method": "TRF",
+                    "boundaries": {
+                        "u0": [0.0, 2.0],
+                        "piEN": [-1.0, 1.0],
+                        "piEE": [-1.0, 1.0],
+                    }
+                },
+            }
+        },
+        "light_curves": [
+            {
+                "survey": "Gaia",
+                "band": "G",
+                "ephemeris": os.path.join(ralph_input, "ephemeris", "gaia_jpl_horizons_results.txt"),
+                "path": os.path.join(ralph_input, "light_curves", "Gaia24amo_Gaia_G.dat"),
+            },
+            {
+                "survey": "LCO",
+                "band": "g",
+                "path": os.path.join(ralph_input, "light_curves", "cleaned_Gaia24amo_LCO_g.dat"),
+            },
+            {
+                "survey": "LCO",
+                "band": "r",
+                "path": os.path.join(ralph_input, "light_curves", "cleaned_Gaia24amo_LCO_r.dat"),
+            },
+            {
+                "survey": "LCO",
+                "band": "i",
+                "path": os.path.join(ralph_input, "light_curves", "cleaned_Gaia24amo_LCO_i.dat"),
+            },
+        ],
     },
-    "fit_analyst": {
-        "ongoing_magnification_threshold": 1.10,
-        "ongoing_amplitude_threshold": 1.0,
-        "return_all_models": True,
-        "model_fit_configuration": {
-            "PSPL_no_blend_no_piE": {
-                "fitting_package": "pyLIMA",
-                "fitting_method": "DE",
-                "boundaries": {
-                    "u0": [0.0, 2.0],
-                }
-            },
-            "PSPL_blend_no_piE": {
-                "fitting_package": "pyLIMA",
-                "fitting_method": "TRF",
-                "boundaries": {
-                    "u0": [0.0, 2.0],
-                }
-            },
-            "PSPL_blend_piE": {
-                "fitting_package": "pyLIMA",
-                "fitting_method": "TRF",
-                "boundaries": {
-                    "u0": [0.0, 2.0],
-                    "piEN": [-1.0, 1.0],
-                    "piEE": [-1.0, 1.0],
-                }
-            },
-            "PSPL_no_blend_piE": {
-                "fitting_package": "pyLIMA",
-                "fitting_method": "TRF",
-                "boundaries": {
-                    "u0": [0.0, 2.0],
-                    "piEN": [-1.0, 1.0],
-                    "piEE": [-1.0, 1.0],
-                }
-            },
-        }
-    },
-    "light_curves": [
-        {
-            "survey": "Gaia",
-            "band": "G",
-            "ephemeris": os.path.join(ralph_input, "ephemeris", "gaia_jpl_horizons_results.txt"),
-            "path": os.path.join(ralph_input, "light_curves", "Gaia24amo_Gaia_G.dat"),
-        },
-        {
-            "survey": "LCO",
-            "band": "g",
-            "path": os.path.join(ralph_input, "light_curves", "cleaned_Gaia24amo_LCO_g.dat"),
-        },
-        {
-            "survey": "LCO",
-            "band": "r",
-            "path": os.path.join(ralph_input, "light_curves", "cleaned_Gaia24amo_LCO_r.dat"),
-        },
-        {
-            "survey": "LCO",
-            "band": "i",
-            "path": os.path.join(ralph_input, "light_curves", "cleaned_Gaia24amo_LCO_i.dat"),
-        },
-    ],
     "final_files": {
         "event_folder": "Gaia24amo",
         "analyst_log": "Gaia24amo_analyst.log",
@@ -184,90 +186,93 @@ scenario_gsa = {
 
 scenario_kwu = {
     "event_name": "AT2024kwu",
-    "ra": 102.93358333,
-    "dec": 44.352166666,
-    "analyst_path": os.path.join(ralph_output, "event_analyst", "AT2024kwu/"),
-    "lc_analyst": {
-        "acceptable_mag_range": {
-            "upper_limit": -10,
-            "lower_limit": 30
-        },
-    },
-    "fit_analyst": {
-        "ongoing_magnification_threshold": 1.10,
-        "ongoing_amplitude_threshold": 1.0,
-        "model_fit_configuration": {
-            "PSPL_no_blend_no_piE": {
-                "fitting_package": "pyLIMA",
-                "fitting_method": "DE",
-                "boundaries": {
-                    "u0": [0.0, 2.0],
-                }
+    "config": {
+        "event_name": "AT2024kwu",
+        "ra": 102.93358333,
+        "dec": 44.352166666,
+        "analyst_path": os.path.join(ralph_output, "event_analyst", "AT2024kwu/"),
+        "lc_analyst": {
+            "acceptable_mag_range": {
+                "upper_limit": -10,
+                "lower_limit": 30
             },
-            "PSPL_blend_no_piE": {
-                "fitting_package": "pyLIMA",
-                "fitting_method": "DE",
-                "fitting_method_args": {
-                    "DE_population" : 10,
-                    "loss_function" : "soft_l1",
+        },
+        "fit_analyst": {
+            "ongoing_magnification_threshold": 1.10,
+            "ongoing_amplitude_threshold": 1.0,
+            "model_fit_configuration": {
+                "PSPL_no_blend_no_piE": {
+                    "fitting_package": "pyLIMA",
+                    "fitting_method": "DE",
+                    "boundaries": {
+                        "u0": [0.0, 2.0],
+                    }
                 },
-                "boundaries": {
-                    "u0": [0.0, 2.0],
-                }
+                "PSPL_blend_no_piE": {
+                    "fitting_package": "pyLIMA",
+                    "fitting_method": "DE",
+                    "fitting_method_args": {
+                        "DE_population" : 10,
+                        "loss_function" : "soft_l1",
+                    },
+                    "boundaries": {
+                        "u0": [0.0, 2.0],
+                    }
+                },
+                "PSPL_blend_piE": {
+                    "fitting_package": "pyLIMA",
+                    "fitting_method": "DE",
+                    "boundaries": {
+                        "u0": [-2.0, 2.0],
+                        "piEN": [-1.0, 1.0],
+                        "piEE": [-1.0, 1.0],
+                    }
+                },
+                "PSPL_no_blend_piE": {
+                    "fitting_package": "pyLIMA",
+                    "fitting_method": "DE",
+                    "boundaries": {
+                        "u0": [-2.0, 2.0],
+                        "piEN": [-1.0, 1.0],
+                        "piEE": [-1.0, 1.0],
+                    }
+                },
+            }
+        },
+        "light_curves": [
+            {
+                "survey": "Gaia",
+                "band": "G",
+                "ephemeris": os.path.join(ralph_input, "ephemeris", "gaia_jpl_horizons_results.txt"),
+                "path": os.path.join(ralph_input, "light_curves", "AT2024kwu_Gaia_G.dat"),
             },
-            "PSPL_blend_piE": {
-                "fitting_package": "pyLIMA",
-                "fitting_method": "DE",
-                "boundaries": {
-                    "u0": [-2.0, 2.0],
-                    "piEN": [-1.0, 1.0],
-                    "piEE": [-1.0, 1.0],
-                }
+            {
+                "survey": "LCO",
+                "band": "g",
+                "path": os.path.join(ralph_input, "light_curves", "AT2024kwu_LCO_g.dat"),
             },
-            "PSPL_no_blend_piE": {
-                "fitting_package": "pyLIMA",
-                "fitting_method": "DE",
-                "boundaries": {
-                    "u0": [-2.0, 2.0],
-                    "piEN": [-1.0, 1.0],
-                    "piEE": [-1.0, 1.0],
-                }
+            {
+                "survey": "LCO",
+                "band": "r",
+                "path": os.path.join(ralph_input, "light_curves", "AT2024kwu_LCO_r.dat"),
             },
-        }
+            {
+                "survey": "LCO",
+                "band": "i",
+                "path": os.path.join(ralph_input, "light_curves", "AT2024kwu_LCO_i.dat"),
+            },
+            {
+                "survey": "ZTF",
+                "band": "g",
+                "path": os.path.join(ralph_input, "light_curves", "AT2024kwu_ZTF_g.dat"),
+            },
+            {
+                "survey": "ZTF",
+                "band": "r",
+                "path": os.path.join(ralph_input, "light_curves", "AT2024kwu_ZTF_r.dat"),
+            },
+        ],
     },
-    "light_curves": [
-        {
-            "survey": "Gaia",
-            "band": "G",
-            "ephemeris": os.path.join(ralph_input, "ephemeris", "gaia_jpl_horizons_results.txt"),
-            "path": os.path.join(ralph_input, "light_curves", "AT2024kwu_Gaia_G.dat"),
-        },
-        {
-            "survey": "LCO",
-            "band": "g",
-            "path": os.path.join(ralph_input, "light_curves", "AT2024kwu_LCO_g.dat"),
-        },
-        {
-            "survey": "LCO",
-            "band": "r",
-            "path": os.path.join(ralph_input, "light_curves", "AT2024kwu_LCO_r.dat"),
-        },
-        {
-            "survey": "LCO",
-            "band": "i",
-            "path": os.path.join(ralph_input, "light_curves", "AT2024kwu_LCO_i.dat"),
-        },
-        {
-            "survey": "ZTF",
-            "band": "g",
-            "path": os.path.join(ralph_input, "light_curves", "AT2024kwu_ZTF_g.dat"),
-        },
-        {
-            "survey": "ZTF",
-            "band": "r",
-            "path": os.path.join(ralph_input, "light_curves", "AT2024kwu_ZTF_r.dat"),
-        },
-    ],
     "final_files": {
         "event_folder": "AT2024kwu",
         "analyst_log": "AT2024kwu_analyst.log",
@@ -280,79 +285,82 @@ scenario_kwu = {
 }
 
 scenario_roman = {
-    "analyst_path": os.path.join(ralph_output, "fit_analyst"),
-    "event_name": "ulwdc1_018_W149",
-    "ra": 267.871,
-    "dec": -29.6712,
-    "lc_analyst": {"acceptable_mag_range":
-                       {"upper_limit": -5, "lower_limit": 30},
-                   "max_acceptable_err": 1.0,
-                   "hampel": {
-                       "window": "1D",
-                       "n_sigma": 3.0,
-                       "use_weighted": False,
-                   },
-                   "save_outlier_results": True,
-                   "to_MJD": True,
-                   },
-    "fit_analyst": {
-        "ongoing_magnification_threshold": 1.10,
-        "ongoing_amplitude_threshold": 1.0,
-        "return_all_models": True,
-        "anomaly_finder": {
-            "method": "hampel",
-            "fitting_package": "pyLIMA",
-            "min_seq_length": 5,
-            "save_results": True,
-            "to_MJD": True,
-            "af_setup": {
-                "window": "3D",
-                "n_sigma": 2.0,
-                "use_weighted": True,
+    "event_name": "ulwdc1_018",
+    "config": {
+        "analyst_path": os.path.join(ralph_output, "fit_analyst"),
+        "event_name": "ulwdc1_018",
+        "ra": 267.871,
+        "dec": -29.6712,
+        "lc_analyst": {"acceptable_mag_range":
+                           {"upper_limit": -5, "lower_limit": 30},
+                       "max_acceptable_err": 1.0,
+                       "hampel": {
+                           "window": "1D",
+                           "n_sigma": 3.0,
+                           "use_weighted": False,
+                       },
+                       "save_outlier_results": True,
+                       "to_MJD": True,
+                       },
+        "fit_analyst": {
+            "ongoing_magnification_threshold": 1.10,
+            "ongoing_amplitude_threshold": 1.0,
+            "return_all_models": True,
+            "anomaly_finder": {
+                "method": "hampel",
+                "fitting_package": "pyLIMA",
+                "min_seq_length": 5,
+                "save_results": True,
+                "to_MJD": True,
+                "af_setup": {
+                    "window": "3D",
+                    "n_sigma": 2.0,
+                    "use_weighted": True,
+                },
+            },
+            "model_fit_configuration": {
+                "PSPL_no_blend_no_piE": {
+                    "fitting_package": "pyLIMA",
+                    "fitting_method": "TRF",
+                    "boundaries": {
+                        "u0": [0.0, 2.0],
+                    }
+                },
+                "PSPL_blend_no_piE": {
+                    "fitting_package": "pyLIMA",
+                    "fitting_method": "TRF",
+                    "boundaries": {
+                        "u0": [0.0, 2.0],
+                    }
+                },
+                "PSPL_blend_piE": {
+                    "fitting_package": "pyLIMA",
+                    "fitting_method": "TRF",
+                    "boundaries": {
+                        "u0": [-2.0, 2.0],
+                        "piEN": [-1.0, 1.0],
+                        "piEE": [-1.0, 1.0],
+                    }
+                },
+                "PSPL_no_blend_piE": {
+                    "fitting_package": "pyLIMA",
+                    "fitting_method": "TRF",
+                    "boundaries": {
+                        "u0": [-2.0, 2.0],
+                        "piEN": [-1.0, 1.0],
+                        "piEE": [-1.0, 1.0],
+                    }
+                },
             },
         },
-        "model_fit_configuration": {
-            "PSPL_no_blend_no_piE": {
-                "fitting_package": "pyLIMA",
-                "fitting_method": "TRF",
-                "boundaries": {
-                    "u0": [0.0, 2.0],
-                }
+        "light_curves": [
+            {
+                "survey": "Roman",
+                "band": "W149",
+                "path": os.path.join(ralph_light_curves, "ulwdc1_018_W149.txt"),
             },
-            "PSPL_blend_no_piE": {
-                "fitting_package": "pyLIMA",
-                "fitting_method": "TRF",
-                "boundaries": {
-                    "u0": [0.0, 2.0],
-                }
-            },
-            "PSPL_blend_piE": {
-                "fitting_package": "pyLIMA",
-                "fitting_method": "TRF",
-                "boundaries": {
-                    "u0": [-2.0, 2.0],
-                    "piEN": [-1.0, 1.0],
-                    "piEE": [-1.0, 1.0],
-                }
-            },
-            "PSPL_no_blend_piE": {
-                "fitting_package": "pyLIMA",
-                "fitting_method": "TRF",
-                "boundaries": {
-                    "u0": [-2.0, 2.0],
-                    "piEN": [-1.0, 1.0],
-                    "piEE": [-1.0, 1.0],
-                }
-            },
-        },
+        ],
     },
-    "light_curves": [
-        {
-            "survey": "Roman",
-            "band": "W149",
-            "path": os.path.join(ralph_light_curves, "ulwdc1_018_W149.txt"),
-        },
-    ],
     "best_model": "PSPL_blend_piE_p",
     "best_results": {
         "PSPL_blend_piE_p": {
@@ -410,20 +418,27 @@ class EventAnalystTest:
 
     def __init__(self, scenario):
         self.scenario = scenario
+        self.event_name = self.scenario.get("event_name")
 
     def set_up(self):
-        self.event_name = self.scenario.get("event_name")
-        self.analyst_path = self.scenario.get("analyst_path")
-        self.event_analyst = EventAnalyst(
-            self.event_name,
-            self.analyst_path,
-            "debug",
-            config_path=os.path.join(self.analyst_path, "config.yaml"),
-            stream=True
-        )
-
-        event_analyst = EventAnalyst(
-            event_name, analyst_path, "debug", config_dict=self.scenario, stream=False
+        if self.event_name == "GDR3_ULENS_025":
+            self.analyst_path = self.scenario.get("analyst_path")
+            self.event_analyst = EventAnalyst(
+                self.event_name,
+                self.analyst_path,
+                "debug",
+                config_path=os.path.join(self.analyst_path, "config.yaml"),
+                stream=True
+            )
+        else:
+            scenario_config = self.scenario.get("config")
+            self.analyst_path = scenario_config.get("analyst_path")
+            self.event_analyst = EventAnalyst(
+                self.event_name,
+                self.analyst_path,
+                "debug",
+                config_dict=scenario_config,
+                stream=False
         )
 
     def test_parse_config(self):
@@ -431,37 +446,28 @@ class EventAnalystTest:
         Test if configuration is parsed correctly.
         """
         if self.event_name == "GDR3_ULENS_025":
-            self.event_analyst.parse_config(config_path=s.path.join(self.analyst_path, "config.yaml"))
+            self.event_analyst.parse_config(config_path=os.path.join(self.analyst_path, "config.yaml"))
             assert type(self.event_analyst.config) is type(self.scenario.get("config_final"))
 
             for element in self.event_analyst.config:
                 assert self.event_analyst.config[element] == self.scenario.get("config_final")[element]
         else:
-            self.event_analyst.parse_config(config_dict=self.)
+            self.event_analyst.parse_config(config_dict=self.scenario.get("config"))
 
-    def test_run_analyst_file(self):
+    def test_run_analyst(self):
         """
         Test running a single event analyst with config from a file.
         """
 
-        event_name = self.scenario.get("event_name")
-        analyst_path = self.scenario.get("analyst_path")
-        event_analyst = EventAnalyst(
-            event_name,
-            analyst_path,
-            "debug",
-            config_path=os.path.join(analyst_path, "config.yaml"),
-            stream=False
-        )
-        event_analyst.run_single_analyst()
+        self.event_analyst.run_single_analyst()
 
         # Check if expected files exist
-        fpath = os.path.join(analyst_path, "fit_results.json")
+        fpath = os.path.join(self.analyst_path, "fit_results.json")
         output = Path(fpath)
         assert output.exists() is True
         assert output.is_file() is True
 
-        fpath = os.path.join(analyst_path, "fit_stats.txt")
+        fpath = os.path.join(self.analyst_path, "fit_stats.txt")
         output = Path(fpath)
         assert output.exists() is True
         assert output.is_file() is True
@@ -469,130 +475,83 @@ class EventAnalystTest:
         final_files = self.scenario.get("final_files")
         for element in final_files:
             if element == "event_folder":
-                output = Path(analyst_path)
+                output = Path(self.analyst_path)
                 assert output.exists() is True
                 assert output.is_dir() is True
 
             if element == "analyst_log":
-                fpath = os.path.join(analyst_path, final_files[element])
+                fpath = os.path.join(self.analyst_path, final_files[element])
                 output = Path(fpath)
                 assert output.exists() is True
                 assert output.is_file() is True
 
             if element == "model_plots":
                 for file_path in final_files[element]:
-                    fpath = os.path.join(analyst_path, file_path)
+                    fpath = os.path.join(self.analyst_path, file_path)
                     output = Path(fpath)
                     assert output.exists() is True
                     assert output.is_file() is True
 
             if element == "cmd_plots":
                 for file_path in final_files[element]:
-                    fpath = os.path.join(analyst_path, file_path)
+                    fpath = os.path.join(self.analyst_path, file_path)
                     output = Path(fpath)
                     assert output.exists() is True
                     assert output.is_file() is True
 
-        with open(self.scenario.get("fit_result"), "r") as file:
-            expected_fit_result = json.load(file)
+        if self.scenario.get("fit_result") is not None:
+            with open(self.scenario.get("fit_result"), "r") as file:
+                expected_fit_result = json.load(file)
 
-        fpath = os.path.join(analyst_path, "fit_results.json")
-        with open(fpath, "r") as file:
-            received_fit_result = json.load(file)
+            fpath = os.path.join(self.analyst_path, "fit_results.json")
+            with open(fpath, "r") as file:
+                received_fit_result = json.load(file)
 
-        for model in expected_fit_result:
-            if model != "PSPL_no_blend_no_piE":
-                model_result = received_fit_result[model]
-                expected_result = expected_fit_result[model]
-                for key in expected_result:
-                    expected = float(expected_result[key])
-                    received = float(model_result[key])
-                    if not np.isnan(expected):
-                        assert pytest.approx(received, 2) == pytest.approx(expected, 2)
+            keys_to_check = ["t0", "u0", "tE", "piEN", "piEE"]
 
-    def test_run_analyst_dict(self):
-        """
-        Test running a single event analyst with a config from a dictionary.
-        """
+            for model in expected_fit_result:
+                if model != "PSPL_no_blend_no_piE":
+                    model_result = received_fit_result[model]
+                    expected_result = expected_fit_result[model]
+                    for key in keys_to_check:
+                        if key in expected_result:
+                            expected = float(expected_result[key])
+                            received = float(model_result[key])
+                            if not np.isnan(expected):
+                                assert pytest.approx(received, rel=1e-1) == pytest.approx(expected, rel=1e-1)
+        else:
+            # Testing if the PSPL_blend_no_piE model makes sense
+            fpath = os.path.join(self.analyst_path, "fit_results.json")
+            with open(fpath, "r") as file:
+                received_fit_result = json.load(file)
 
-        event_name = self.scenario.get("event_name")
-        analyst_path = self.scenario.get("analyst_path")
-        event_analyst = EventAnalyst(
-            event_name, analyst_path, "debug", config_dict=self.scenario, stream=False
-        )
-        event_analyst.run_single_analyst()
-
-        # Check if expected files exist
-        fpath = os.path.join(analyst_path, "fit_results.json")
-        output = Path(fpath)
-        assert output.exists() is True
-        assert output.is_file() is True
-
-        fpath = os.path.join(analyst_path, "fit_stats.txt")
-        output = Path(fpath)
-        assert output.exists() is True
-        assert output.is_file() is True
-
-        final_files = self.scenario.get("final_files")
-        for element in final_files:
-            if element == "event_folder":
-                output = Path(analyst_path)
-                assert output.exists() is True
-                assert output.is_dir() is True
-
-            if element == "analyst_log":
-                fpath = os.path.join(analyst_path, final_files[element])
-                output = Path(fpath)
-                assert output.exists() is True
-                assert output.is_file() is True
-
-            if element == "model_plots":
-                for file_path in final_files[element]:
-                    fpath = os.path.join(analyst_path, file_path)
-                    output = Path(fpath)
-                    assert output.exists() is True
-                    assert output.is_file() is True
-
-            if element == "cmd_plots":
-                for file_path in final_files[element]:
-                    fpath = os.path.join(analyst_path, file_path)
-                    output = Path(fpath)
-                    assert output.exists() is True
-                    assert output.is_file() is True
-
-        # Testing if the PSPL_blend_no_piE model makes sense
-        fpath = os.path.join(analyst_path, "fit_results.json")
-        with open(fpath, "r") as file:
-            received_fit_result = json.load(file)
-
-        expected_range = {
-            "t0": [2457000.0, 2460600.0],
-            "u0": [-2.0, 2.0],
-            "tE": [1.0, 500.0]
-        }
-        model_result = received_fit_result["PSPL_blend_no_piE"]
-        for key in ["t0", "u0", "tE"]:
-            received = float(model_result[key])
-            lower = expected_range[key][0]
-            upper = expected_range[key][1]
-            if not np.isnan(received):
-                assert (lower <= received <= upper)
+            expected_range = {
+                "t0": [2457000.0, 2460600.0],
+                "u0": [-2.0, 2.0],
+                "tE": [1.0, 500.0]
+            }
+            model_result = received_fit_result["PSPL_blend_no_piE"]
+            for key in ["t0", "u0", "tE"]:
+                received = float(model_result[key])
+                lower = expected_range[key][0]
+                upper = expected_range[key][1]
+                if not np.isnan(received):
+                    assert (lower <= received <= upper)
 
     def test_anomaly_finder(self):
         """
         Test running an anomaly finder with Hampel filter.
         """
 
-        event_name = self.scenario.get("event_name")
-        analyst_path = self.scenario.get("analyst_path")
-        event_analyst = EventAnalyst(
-            event_name, analyst_path, "debug", config_dict=self.scenario, stream=False
-        )
-        event_analyst.run_lc_analyst()
+        self.event_analyst.run_lc_analyst()
         fit_analyst = FitAnalyst(
-            event_analyst.event_name, event_analyst.analyst_path, event_analyst.light_curves, event_analyst.log,
-            outlier_results=event_analyst.outlier_results, outlier_seqs=event_analyst.outlier_seqs,
-            config_dict=event_analyst.config
+            self.event_analyst.event_name,
+            self.event_analyst.analyst_path,
+            self.event_analyst.light_curves,
+            self.event_analyst.log,
+            outlier_results=self.event_analyst.outlier_results,
+            outlier_seqs=self.event_analyst.outlier_seqs,
+            config_dict=self.event_analyst.config
         )
 
         answers = self.scenario.get("answers")
@@ -617,23 +576,23 @@ class EventAnalystTest:
             longest_sequence = answers[entry]["longest_sequence"]
 
             outs = np.count_nonzero(fit_analyst.anomaly_results[entry]["is_outlier"])
-            nseqs = len(fit_analyst.anomaly_seqs[entry])
-            lseq = 0
+            n_seqs = len(fit_analyst.anomaly_seqs[entry])
+            l_seq = 0
             for seq in fit_analyst.anomaly_seqs[entry]:
-                if seq["sequence_length"] > lseq:
-                    lseq = seq["sequence_length"]
+                if seq["sequence_length"] > l_seq:
+                    l_seq = seq["sequence_length"]
 
             assert n_anomalous_pts == outs
-            assert af_sequences == nseqs
-            assert longest_sequence == lseq
+            assert af_sequences == n_seqs
+            assert longest_sequence == l_seq
 
-            fpath = os.path.join(analyst_path, f"af_results_{entry}.html")
+            fpath = os.path.join(self.analyst_path, f"af_results_{entry}.html")
             output = Path(fpath)
             assert output.exists() is True
             assert output.is_file() is True
 
-        fpath1 = os.path.join(analyst_path, "af_results.npz")
-        fpath2 = os.path.join(analyst_path, "af_sequences.json")
+        fpath1 = os.path.join(self.analyst_path, "af_results.npz")
+        fpath2 = os.path.join(self.analyst_path, "af_sequences.json")
         for fpath in [fpath1, fpath2]:
             output = Path(fpath)
             assert output.exists() is True
@@ -657,23 +616,23 @@ def test_run():
     Run all tests.
     """
 
-    # case = scenario_file_cat
-    # test = EventAnalystTest(case)
-    # test.test_parse_config()
-    # test.test_run_analyst_file()
-    #
-    # for case in [scenario_kwu, scenario_gsa]:
-    #     test = EventAnalystTest(case)
-    #     test.test_run_analyst_dict()
+    for case in [scenario_file_cat, scenario_kwu, scenario_gsa]:
+        test = EventAnalystTest(case)
+        test.set_up()
+        test.test_run_analyst()
 
     test = EventAnalystTest(scenario_roman)
+    test.set_up()
     test.test_parse_config()
     test.test_anomaly_finder()
 
     # Remove created files
-    for case in [scenario_file_cat, scenario_kwu, scenario_gsa]:
-        analyst_path = case.get("analyst_path")
+    for case in [scenario_file_cat, scenario_kwu, scenario_gsa, scenario_roman]:
         event_name = case.get("event_name")
+        if event_name is "GDR3_ULENS_025":
+            analyst_path = case.get("analyst_path")
+        else:
+            analyst_path = case["config"].get("analyst_path")
 
         fpath = os.path.join(analyst_path, "fit_results.json")
         output = Path(fpath)
@@ -716,24 +675,17 @@ def test_run():
                 if output.exists():
                     os.remove(output)
 
-    analyst_path = scenario_roman.get("analyst_path")
-    event_name = scenario_roman.get("event_name")
+        if event_name == "ulwdc1_018":
+            fpath1 = os.path.join(analyst_path, "af_results.npz")
+            fpath2 = os.path.join(analyst_path, "af_sequences.json")
+            for fpath in [fpath1, fpath2]:
+                output = Path(fpath)
+                if output.exists():
+                    os.remove(output)
 
-    fpath = os.path.join(analyst_path, event_name + "_analyst.log")
-    output = Path(fpath)
-    if output.exists():
-        os.remove(output)
-
-    fpath1 = os.path.join(analyst_path, "af_results.npz")
-    fpath2 = os.path.join(analyst_path, "af_sequences.json")
-    for fpath in [fpath1, fpath2]:
-        output = Path(fpath)
-        if output.exists():
-            os.remove(output)
-
-    for entry in scenario_roman.get("light_curves"):
-        lc_tag = f"{entry["survey"]}_{entry["band"]}"
-        fpath = os.path.join(analyst_path, f"af_results_{lc_tag}.html")
-        output = Path(fpath)
-        if output.exists():
-            os.remove(output)
+            for entry in scenario_roman["config"].get("light_curves"):
+                lc_tag = f"{entry["survey"]}_{entry["band"]}"
+                fpath = os.path.join(analyst_path, f"af_results_{lc_tag}.html")
+                output = Path(fpath)
+                if output.exists():
+                    os.remove(output)

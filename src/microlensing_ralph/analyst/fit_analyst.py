@@ -549,6 +549,39 @@ class FitAnalyst(BaseAnalyst):
 
         return best_model_name
 
+    def evaluate_outliers_and_anomalies(self):
+        """
+        Evaluate all found outliers and anomalies, if they
+        form long enough sequences and if they co-occur across
+        levels and light curves.
+
+        :return: Return `True` if a consistent anomaly was found in the event.
+        :type: bool
+        """
+
+        # self.outlier_results
+        # self.outlier_seqs
+        # self.anomaly_results
+        # self.anomaly_seqs
+        min_sequence_length = self.config["anomaly_finder"].get("min_seq_length", None)
+        candidate_anomaly = {}
+        if min_sequence_length is not None:
+            # check if there is a sufficiently long sequence of outliers
+            for tag in self.outlier_seqs:
+                lc_candidate_anomalies = []
+                lc_outlier_seq = self.outlier_seqs[tag]
+                for sequence in lc_outlier_seq:
+                    if sequence[] > min_sequence_length:
+
+
+
+            # check if there is a sufficiently long sequence of anomalous points
+            for tag in self.anomaly_seqs:
+                if
+        else:
+            #throw error
+
+
     def perform_fit(self):
         """
         Perform fitting procedures according to the flowchart found in here [link link link].
@@ -712,6 +745,9 @@ class FitAnalyst(BaseAnalyst):
                 outlier_flags =self.anomaly_results[tag]["is_outlier"]
                 res = np.array(residuals[tag])
                 self.anomaly_seqs[tag] = analyst_tools.vet_outliers(res, outlier_flags)
+
+                # vet outliers and anomalies
+
 
             if self.config["anomaly_finder"].get("save_results", False):
                 self.log.info("Fit Analyst: Saving anomaly finder results.")

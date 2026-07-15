@@ -318,7 +318,7 @@ def hampel_filter(light_curve, window='3D', n_sigma=5.0, use_weighted=False):
 
     return result
 
-def vet_outliers(light_curve, is_outlier):
+def vet_outliers(light_curve, is_outlier, log):
     """
     Function that checks if found outliers form a sequence of consecutive points
     in the light curve. Doesn't take into time-skips between data.
@@ -338,6 +338,7 @@ def vet_outliers(light_curve, is_outlier):
     n_seqs = 0
     n_pts_in_seq = 0
     t_start, t_end = 0.0, 0.0
+    total_points = 0
     for i in range(len(light_curve[:, 0])):
         if is_outlier[i]:
             n_pts_in_seq += 1
@@ -353,5 +354,8 @@ def vet_outliers(light_curve, is_outlier):
                     'sequence_length': n_pts_in_seq,
                 }
                 groups.append(new_sequence)
+                total_points += n_pts_in_seq
             n_pts_in_seq = 0
+
+    log.debug(f"Vet outliers: Found {total_points} in total, among {n_seqs} sequences.")
     return groups

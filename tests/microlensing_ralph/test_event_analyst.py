@@ -403,12 +403,13 @@ scenario_roman = {
         },
     },
     "answers": {
-            "Roman_W149": {
-                "af_n_pts": 1733,
-                "af_sequences": 82,
-                "longest_sequence": 28,
-            },
+        "Roman_W149": {
+            "af_n_pts": 1733,
+            "af_sequences": 82,
+            "longest_sequence": 28,
         },
+        "n_anomalous_points": 51,
+    },
 }
 
 class EventAnalystTest:
@@ -440,6 +441,9 @@ class EventAnalystTest:
                 config_dict=scenario_config,
                 stream=False
         )
+
+        if not os.path.exists(self.analyst_path):
+            os.makedirs(self.analyst_path)
 
     def test_parse_config(self):
         """
@@ -568,28 +572,8 @@ class EventAnalystTest:
         fit_analyst.best_model = self.scenario.get("best_model")
         fit_analyst.best_results = self.scenario.get("best_results")
 
-        fit_analyst.perform_anomaly_finding()
-
-        for entry in answers:
-            n_anomalous_pts = answers[entry]["af_n_pts"]
-            af_sequences = answers[entry]["af_sequences"]
-            longest_sequence = answers[entry]["longest_sequence"]
-
-            outs = np.count_nonzero(fit_analyst.anomaly_results[entry]["is_outlier"])
-            n_seqs = len(fit_analyst.anomaly_seqs[entry])
-            l_seq = 0
-            for seq in fit_analyst.anomaly_seqs[entry]:
-                if seq["sequence_length"] > l_seq:
-                    l_seq = seq["sequence_length"]
-
-            assert n_anomalous_pts == outs
-            assert af_sequences == n_seqs
-            assert longest_sequence == l_seq
-
-            fpath = os.path.join(self.analyst_path, f"af_results_{entry}.html")
-            output = Path(fpath)
-            assert output.exists() is True
-            assert output.is_file() is True
+        anomaly_found = fit_analyst.perform_anomaly_finding()
+        assert anomaly_found is True
 
         fpath1 = os.path.join(self.analyst_path, "af_results.npz")
         fpath2 = os.path.join(self.analyst_path, "af_sequences.json")
@@ -597,6 +581,30 @@ class EventAnalystTest:
             output = Path(fpath)
             assert output.exists() is True
             assert output.is_file() is True
+
+        for entry in answers:
+            if type(answers[entry]) == type({}):
+                n_anomalous_pts = answers[entry]["af_n_pts"]
+                af_sequences = answers[entry]["af_sequences"]
+                longest_sequence = answers[entry]["longest_sequence"]
+
+                outs = np.count_nonzero(fit_analyst.anomaly_results[entry]["is_outlier"])
+                n_seqs = len(fit_analyst.anomaly_seqs[entry])
+                l_seq = 0
+                for seq in fit_analyst.anomaly_seqs[entry]:
+                    if seq["sequence_length"] > l_seq:
+                        l_seq = seq["sequence_length"]
+
+                assert n_anomalous_pts == outs
+                assert af_sequences == n_seqs
+                assert longest_sequence == l_seq
+
+                fpath = os.path.join(self.analyst_path, f"af_results_{entry}.html")
+                output = Path(fpath)
+                assert output.exists() is True
+                assert output.is_file() is True
+            else:
+                assert answers[entry] == fit_analyst.n_anomalous_points
 
     @pytest.mark.skip(reason="This test is for debugging code only")
     def test_no_config(self):
@@ -629,7 +637,7 @@ def test_run():
     # Remove created files
     for case in [scenario_file_cat, scenario_kwu, scenario_gsa, scenario_roman]:
         event_name = case.get("event_name")
-        if event_name is "GDR3_ULENS_025":
+        if event_name == "GDR3_ULENS_025":
             analyst_path = case.get("analyst_path")
         else:
             analyst_path = case["config"].get("analyst_path")

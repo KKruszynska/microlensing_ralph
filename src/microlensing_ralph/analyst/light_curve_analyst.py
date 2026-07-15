@@ -287,7 +287,7 @@ class LightCurveAnalyst(BaseAnalyst):
 
             outlier_flags = self.outlier_results[f"{entry["survey"]}_{entry["band"]}"]["is_outlier"]
             self.outlier_seqs[f"{entry["survey"]}_{entry["band"]}"] = (
-                vet_outliers(lc, outlier_flags)
+                vet_outliers(lc, outlier_flags, self.log)
             )
             self.log.debug(f"LC Analyst: Outliers vetted for: {entry["survey"]}_{entry["band"]}.")
             self.log.info(

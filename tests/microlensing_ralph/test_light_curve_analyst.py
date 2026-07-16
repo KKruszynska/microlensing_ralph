@@ -15,7 +15,10 @@ scenario_gaia = {
     "event_name": "GDR3_ULENS_025",
     "ra": 260.8781,
     "dec": -27.3788,
-    "lc_analyst": {"acceptable_mag_range": {"upper_limit": -10, "lower_limit": 30}},
+    "lc_analyst": {"acceptable_mag_range":
+                       {"upper_limit": -10, "lower_limit": 30},
+                   "max_acceptable_err": 1.0
+                   },
     "light_curves": [
         {
             "survey": "Gaia",
@@ -49,7 +52,10 @@ scenario_gsa = {
     "ra": 249.14892083,
     "dec": -53.74991944,
     "fit_analyst": {"fitting_package": "pylima"},
-    "lc_analyst": {"upper_limit": -10, "lower_limit": 30},
+    "lc_analyst": {"acceptable_mag_range":
+                       {"upper_limit": -10, "lower_limit": 30},
+                   "max_acceptable_err": 1.0
+                   },
     "light_curves": [
         {
             "survey": "Gaia",
@@ -74,6 +80,69 @@ scenario_gsa = {
     ],
 }
 
+scenario_moa = {
+    "path_outputs": os.path.join(ralph_output, "lc_analyst", "MOA"),
+    "event_name": "MOA_2025_BLG_0088",
+    "ra": 268.9010250,
+    "dec": -34.9196530,
+    "fit_analyst": {"fitting_package": "pylima"},
+    "lc_analyst": {"acceptable_mag_range":
+                       {"upper_limit": -10, "lower_limit": 30},
+                   "max_acceptable_err": 1.0,
+                   "hampel": {
+                       "window": "3D",
+                       "n_sigma": 5.0,
+                       "use_weighted": True,
+                   },
+                   "save_outlier_results": False,
+                   },
+    "light_curves": [
+        {
+            "survey": "MOA",
+            "band": "I",
+            "path": os.path.join(ralph_light_curves, "MB250088_MOA_I.dat"),
+        },
+    ],
+    "answers": {
+        "MOA_I": {
+            "number_of_outliers": 380,
+            "number_of_sequences": 26,
+            "longest_sequence": 3,
+        },
+    },
+}
+
+scenario_roman = {
+    "path_outputs": os.path.join(ralph_output, "lc_analyst", "Roman"),
+    "event_name": "ulwdc1_018_W149",
+    "ra": 267.871,
+    "dec": -29.6712,
+    "fit_analyst": {"fitting_package": "pylima"},
+    "lc_analyst": {"acceptable_mag_range":
+                       {"upper_limit": -10, "lower_limit": 30},
+                   "max_acceptable_err": 1.0,
+                   "hampel": {
+                       "window": "1D",
+                       "n_sigma": 3.0,
+                       "use_weighted": False,
+                   },
+                   "save_outlier_results": False,
+                   },
+    "light_curves": [
+        {
+            "survey": "Roman",
+            "band": "W149",
+            "path": os.path.join(ralph_light_curves, "ulwdc1_018_W149.txt"),
+        },
+    ],
+    "answers": {
+            "Roman_W149": {
+                "number_of_outliers": 183,
+                "number_of_sequences": 1,
+                "longest_sequence": 23,
+            },
+        },
+}
 
 class LightCurveAnalystTest:
     """
@@ -86,19 +155,25 @@ class LightCurveAnalystTest:
     def __init__(self, scenario):
         self.scenario = scenario
 
-    def test_parse_config(self):
+    def set_up(self):
         """
-        Parse the configuration file and check if it is done as expected.
+        Set up event for testing.
         """
 
-        config = {}
-        config["event_name"] = self.scenario.get("event_name")
-        path_outputs = self.scenario.get("path_outputs")
-        config["ra"], config["dec"] = self.scenario.get("ra"), self.scenario.get("dec")
-        config["lc_analyst"] = {}
         dictionary = self.scenario.get("lc_analyst")
-        config["lc_analyst"]["acceptable_mag_range"] = dictionary.get("acceptable_mag_range")
-        config["light_curves"] = self.scenario.get("light_curves")
+        config = {
+            "event_name": self.scenario.get("event_name"),
+            "ra": self.scenario.get("ra"),
+            "dec": self.scenario.get("dec"),
+            "lc_analyst": {
+                "acceptable_mag_range": dictionary.get("acceptable_mag_range"),
+                "max_acceptable_err": dictionary.get("max_acceptable_err"),
+                "hampel": dictionary.get("hampel", None),
+                "save_outlier_results":  dictionary.get("save_outlier_results", False),
+            },
+            "light_curves": self.scenario.get("light_curves"),
+        }
+        path_outputs = self.scenario.get("path_outputs")
 
         light_curves = []
         for entry in config["light_curves"]:
@@ -116,38 +191,35 @@ class LightCurveAnalystTest:
                 }
             )
 
+        return config, dictionary, path_outputs, light_curves
+
+    def test_parse_config(self):
+        """
+        Parse the configuration file and check if it is done as expected.
+        """
+
+        config, dictionary, path_outputs, light_curves = self.set_up()
+
         log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], stream=True)
         analyst = LightCurveAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
         upper_mag = analyst.config["acceptable_mag_range"]["upper_limit"]
         lower_mag = analyst.config["acceptable_mag_range"]["lower_limit"]
         mag_range_dict = analyst.config["acceptable_mag_range"]
-        logs.close_log(log)
+        max_err = analyst.config["max_acceptable_err"]
 
         assert upper_mag == dictionary["acceptable_mag_range"].get("upper_limit")
         assert lower_mag == dictionary["acceptable_mag_range"].get("lower_limit")
         assert mag_range_dict == dictionary["acceptable_mag_range"]
+        assert max_err == dictionary["max_acceptable_err"]
+
+        logs.close_log(log)
 
     def test_run_analyst(self):
         """
         Test running the Light Curve Analyst.
         """
 
-        config = {}
-        config["event_name"] = self.scenario.get("event_name")
-        path_outputs = self.scenario.get("path_outputs")
-        config["ra"], config["dec"] = self.scenario.get("ra"), self.scenario.get("dec")
-        config["lc_analyst"] = {}
-        dict = self.scenario.get("lc_analyst")
-        config["lc_analyst"]["n_max"] = dict.get("n_max")
-        config["light_curves"] = self.scenario.get("light_curves")
-
-        light_curves = []
-        for entry in config["light_curves"]:
-            survey = entry["survey"]
-            band = entry["band"]
-            if "path" in entry:
-                light_curve = input_tools.load_light_curve_from_path(entry["path"])
-                light_curves.append({"light_curve": light_curve, "survey": survey, "band": band})
+        config, dictionary, path_outputs, light_curves = self.set_up()
 
         log = logs.start_log(path_outputs, "debug", event_name=config["event_name"])
         analyst = LightCurveAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
@@ -159,6 +231,34 @@ class LightCurveAnalystTest:
             negative_errs = np.where(light_curve[:, 2] < 0)
             assert len(negative_errs[0]) == len([])
 
+    def test_noisy_lc(self):
+        """
+        Test if noisy light curve outliers are correctly removed.
+        """
+        answers = self.scenario.get("answers")
+
+        config, dictionary, path_outputs, light_curves = self.set_up()
+
+        log = logs.start_log(path_outputs, "debug", event_name=config["event_name"])
+        analyst = LightCurveAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
+        analyst.perform_quality_check()
+        analyst.perform_outlier_check()
+
+        for entry in answers:
+            n_outliers = answers[entry]["number_of_outliers"]
+            n_sequences = answers[entry]["number_of_sequences"]
+            longest_sequence = answers[entry]["longest_sequence"]
+
+            outs = np.count_nonzero(analyst.outlier_results[entry]["is_outlier"])
+            nseqs = len(analyst.outlier_seqs[entry])
+            lseq = 0
+            for seq in analyst.outlier_seqs[entry]:
+                if seq["sequence_length"] > lseq:
+                    lseq = seq["sequence_length"]
+
+            assert n_outliers == outs
+            assert n_sequences == nseqs
+            assert longest_sequence == lseq
 
 class BadLightCurvesTest:
     """
@@ -171,7 +271,7 @@ class BadLightCurvesTest:
         """
 
         config = {}
-        config["event_name"] = "test_negative_errs"
+        config["event_name"] = "test_bad_lc"
         path_outputs = os.path.join(ralph_output, "lc_analyst")
         config["ra"], config["dec"] = 1.0, 1.0
         config["lc_analyst"] = {}
@@ -193,6 +293,10 @@ class BadLightCurvesTest:
                 [2457006.0, 17.0, np.inf],
                 [2457007.0, 17.09, 0.02],
                 [2457008.0, 17.2, 0.02],
+                [2457009.0, 99.0, 1.00],
+                [2457010.0, -99.0, 1.00],
+                [2457011.0, 17.2, 2.02],
+                [2457012.0, 17.2, 1.02],
             ],
         }
 
@@ -213,6 +317,9 @@ class BadLightCurvesTest:
             assert len(out_of_bounds[0]) == len([])
             out_of_bounds = np.where(lc[:, 1] > 40)
             assert len(out_of_bounds[0]) == len([])
+
+            large_errs = np.where(lc[:, 2] > 1.0)
+            assert len(large_errs[0]) == len([])
 
             unique_entries = np.unique(lc[:, 0])
             assert len(unique_entries) == len(lc[:, 0])
@@ -243,7 +350,12 @@ def test_run():
     test = BadLightCurvesTest()
     test.test_bad_lc()
 
-    for case in [scenario_gaia, scenario_gsa]:
+    for case in [scenario_moa, scenario_roman]:
+        test = LightCurveAnalystTest(case)
+        test.test_parse_config()
+        test.test_noisy_lc()
+
+    for case in [scenario_gaia, scenario_gsa, scenario_moa, scenario_roman]:
         analyst_path = case.get("path_outputs")
         event_name = case.get("event_name")
 

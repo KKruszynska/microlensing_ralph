@@ -184,7 +184,7 @@ class FitAnalystTest:
         config["fit_analyst"] = {
             "ongoing_magnification_threshold": fit_params.get("ongoing_magnification_threshold"),
             "ongoing_amplitude_threshold": fit_params.get("ongoing_amplitude_threshold"),
-            "return_all_models": fit_params.get("return_all_models"),
+            "return_all_models": fit_params.get("return_all_models", True),
         }
 
         model_params = fit_params.get("model_fit_configuration")

@@ -30,6 +30,7 @@ dependencies = [
     "pyLIMA==1.9.8",
     "pytest>=9.0.3",
     "PyYAML>=6.0.3",
+    "weightedstats>=0.4.1",
 ]
 
 [project.urls]

@@ -9,6 +9,8 @@ from microlensing_ralph.analyst import analyst_tools
 from microlensing_ralph.analyst.analyst import BaseAnalyst
 from microlensing_ralph.fitting_support import pylima
 
+from microlensing_ralph.toolbox.output_tools import plot_outlier_results
+
 
 class FitAnalyst(BaseAnalyst):
     """
@@ -29,6 +31,14 @@ class FitAnalyst(BaseAnalyst):
 
     :param log: A logger instance started by the Event Analyst.
     :type log: logging.Logger
+
+    :param outlier_results: A dictionary with the results of outlier detection procedure
+        done by the Light Curve Analyst.
+    :type outlier_results: dict, optional
+
+    :param outlier_seqs: A list of dictionaries with sequences of outliers found
+        by the Light Curve Analyst.
+    :type outlier_seqs: list, optional
 
     :param config_dict: A dictionary with the Event Analyst configuration.
     :type config_dict: dict, optional
@@ -86,6 +96,7 @@ class FitAnalyst(BaseAnalyst):
     """
 
     def __init__(self, event_name, analyst_path, light_curves, log,
+                 outlier_results=None, outlier_seqs=None,
                  config_dict=None, config_path=None
                  ):
 
@@ -97,6 +108,12 @@ class FitAnalyst(BaseAnalyst):
         self.best_results = {}
         self.best_model = ""
         self.start_time = time.time()
+
+        self.outlier_results = outlier_results
+        self.outlier_seqs = outlier_seqs
+
+        self.anomaly_results = {}
+        self.anomaly_seqs = {}
 
         if config_dict is not None:
             self.config = self.parse_config(config_dict=config_dict)
@@ -133,6 +150,8 @@ class FitAnalyst(BaseAnalyst):
         self.config["return_all_models"] = config["fit_analyst"].get(
             "return_all_models", True
         )
+
+        self.config["anomaly_finder"] = config["fit_analyst"].get("anomaly_finder", None)
 
         params = {}
         model_fit_config = config["fit_analyst"].get("model_fit_configuration")
@@ -364,7 +383,6 @@ class FitAnalyst(BaseAnalyst):
         starting_params["piEN"] = 0.0
         starting_params["piEE"] = 0.0
 
-        self.log.info("Fit Analyst: Using default fitting setup.")
         results = self.fit_pspl(
             "PSPL_blend_piE",
             os.path.join(self.analyst_path, "PSPL_blend_piE"),
@@ -529,7 +547,61 @@ class FitAnalyst(BaseAnalyst):
                 lowest_chi2dof = chi2dof
                 best_model_name = model
 
+        self.log.info(f"Best model found: {best_model_name}")
+        self.log.debug(f"Best model {best_model_name}, chi^2 = {lowest_chi2dof}.")
         return best_model_name
+
+    def evaluate_outliers_and_anomalies(self):
+        """
+        Evaluate all found outliers and anomalies, if they
+        form long enough sequences.
+
+        :return: Return `True` if a consistent anomaly was found in the event.
+        :type: bool
+        """
+
+        anomaly_found = False
+        min_sequence_length = self.config["anomaly_finder"].get("min_seq_length", None)
+        candidate_anomaly = {}
+        n_anomalous_points = 0
+        if min_sequence_length is not None:
+            # check if there is a sufficiently long sequence of outliers
+            for entry in self.light_curves:
+                tag = f"{entry["survey"]}_{entry["band"]}"
+                lc_candidate_anomalies = []
+                lc_outlier_seq = self.outlier_seqs[tag]
+                lc_anomaly_seq = self.anomaly_seqs[tag]
+                if lc_outlier_seq is not None:
+                    for sequence in lc_outlier_seq:
+                        if sequence["sequence_length"] > min_sequence_length:
+                            lc_candidate_anomalies.append(sequence)
+                            n_anomalous_points += sequence["sequence_length"]
+                            anomaly_found = True
+                if lc_anomaly_seq is not None:
+                    for sequence in lc_anomaly_seq:
+                        if sequence["sequence_length"] > min_sequence_length:
+                            lc_candidate_anomalies.append(sequence)
+                            n_anomalous_points += sequence["sequence_length"]
+                            anomaly_found = True
+
+                candidate_anomaly[tag] = lc_candidate_anomalies
+
+            if anomaly_found:
+                self.log.info(f"Fit Analyst: Anomaly found.")
+                self.log.debug(f"Fit Analyst: Found {n_anomalous_points} anomalous points.")
+                self.candidate_anomaly_seqs = candidate_anomaly
+                self.n_anomalous_points = n_anomalous_points
+                return anomaly_found
+            else:
+                self.log.info(f"Fit Analyst: No anomalies found.")
+                self.candidate_anomaly_seqs = None
+                return False
+
+        else:
+            raise UnboundLocalError(
+                "Fit Analyst requires a min_seq_length for anomaly_finder section. Otherwise, anomaly finding cannot be performed."
+            )
+
 
     def perform_fit(self):
         """
@@ -541,6 +613,22 @@ class FitAnalyst(BaseAnalyst):
         :rtype: dict
         """
 
+        # TODO: Add sorting input into a pd.DataFrame required by SIGNALMEN and check if
+        #       outlier sequences are occurring at the same time.
+
+        # First I will mask outliers before initial fits. They will be re-evaluated
+        # later.
+        if self.outlier_results is not None:
+            self.log.debug(f"Fit Analyst: Masking outliers before initial fits.")
+            for entry in self.light_curves:
+                # extract np array with the light curve
+                lc_tag = f"{entry["survey"]}_{entry["band"]}"
+                lc = np.array(entry["light_curve"])
+                if lc_tag in self.outlier_results:
+                    outlier_flags =  self.outlier_results[lc_tag]["is_outlier"]
+                    entry["light_curve_with_outliers"] = lc
+                    entry["light_curve"] = lc[~outlier_flags]
+
         self.log.debug("Fit Analyst: Performing a fit.")
         ongoing, t_0 = self.perform_ongoing_check()
 
@@ -548,14 +636,23 @@ class FitAnalyst(BaseAnalyst):
         if ongoing:
             self.log.info("Fit Analyst: Performing an ongoing fit.")
             self.perform_ongoing_fit(t_0)
-            # perform model evaluation here
+            self.best_model = self.evaluate_models()
             # perform anomaly finder on best model
+            if self.config.get("anomaly_finder", None) is not None:
+                anomaly_found = self.perform_anomaly_finding()
+                if anomaly_found:
+                    self.log.debug(f"Anomaly found. Pass relevant information to somewhere.")
 
         else:
             self.log.info("Fit Analyst: Performing a finished event fit.")
             self.perform_finished_fit_pspl(t_0)
-            # perform model evaluation here
+            self.best_model = self.evaluate_models()
             # perform anomaly finder on best model
+            if self.config.get("anomaly_finder", None) is not None:
+                anomaly_found = self.perform_anomaly_finding()
+                if anomaly_found:
+                    self.log.debug(f"Multiple source and multiple lens fit will be performed [once implemented].")
+                    # add anomalous points back into the light curve, they are not outliers
             # if anomaly: perform_finished_fit_multiple()
             # else if peak covered: perform_finished_FSPL()
             # evaluate models
@@ -632,3 +729,73 @@ class FitAnalyst(BaseAnalyst):
             self.best_results = dict_to_save
 
         return self.best_results
+
+    def perform_anomaly_finding(self):
+        """
+        Anomaly Finding routine, currently supporting only Hampel filter anomaly finder.
+
+        :return: If an anomaly was found, return `True`, otherwise return `False`.
+        :rtype: bool
+        """
+
+        af_method = self.config["anomaly_finder"].get("method", None)
+        af_fit_package = self.config["anomaly_finder"].get("fitting_package", None)
+
+        if af_method == 'hampel':
+            # Perform anomaly finding using the Hampel filter
+            best_model = self.best_results[self.best_model]
+            model_tag = self.best_model.split("_")[0]
+            # find residuals of best model
+            if af_fit_package is not None:
+                self.log.info(f"Fit Analyst: Using fitting setup specified by the User: {af_fit_package}.")
+                if af_fit_package == "pyLIMA":
+                    fit = pylima.fit_pylima.FitPylima(self.log)
+                    residuals = fit.get_best_model_residuals(
+                        model_tag,
+                        self.config["ra"], self.config["dec"],
+                        best_model,
+                        self.light_curves)
+
+            hampel_setup = self.config["anomaly_finder"].get("af_setup", None)
+            window = hampel_setup.get("window", None)
+            n_sigma = hampel_setup.get("n_sigma", None)
+            use_weight = hampel_setup.get("use_weighted", None)
+
+            for tag in residuals:
+                res = np.array(residuals[tag])
+                result_tag = analyst_tools.hampel_filter(res, window, n_sigma, use_weight)
+                self.anomaly_results[tag] = result_tag
+
+            # vet anomaly results in residuals
+            for tag in residuals:
+                outlier_flags =self.anomaly_results[tag]["is_outlier"]
+                res = np.array(residuals[tag])
+                self.anomaly_seqs[tag] = analyst_tools.vet_outliers(res, outlier_flags, self.log)
+
+            if self.config["anomaly_finder"].get("save_results", False):
+                self.log.info("Fit Analyst: Saving anomaly finder results.")
+                np.savez(
+                    os.path.join(self.analyst_path, "af_results.npz"),
+                    self.anomaly_results,
+                )
+
+                with open(os.path.join(self.analyst_path, "af_sequences.json"), "w", encoding="utf-8") as file:
+                    json.dump(self.anomaly_seqs, file, ensure_ascii=False, indent=4)
+
+                for tag in residuals:
+                    res = np.array(residuals[tag])
+                    af_res = self.anomaly_results[tag]
+                    af_seqs = self.anomaly_seqs[tag]
+                    output_fname = f"af_results_{tag}.html"
+                    plot_outlier_results(
+                        os.path.join(self.analyst_path, output_fname),
+                        f"Anomalies found for {tag} residuals",
+                        res,
+                        af_res,
+                        af_seqs,
+                        to_mjd=self.config["anomaly_finder"].get("to_MJD", False)
+                    )
+                self.log.debug(f"Fit Analyst: Anomaly finder results saved.")
+
+            anomaly_found = self.evaluate_outliers_and_anomalies()
+            return anomaly_found

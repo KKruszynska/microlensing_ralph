@@ -3,7 +3,7 @@
 For more information on writing benchmarks:
 https://asv.readthedocs.io/en/stable/writing_benchmarks.html."""
 
-from ralph.benchmarks import example_benchmarks
+from microlensing_ralph.benchmarks import example_benchmarks
 
 
 def time_computation():

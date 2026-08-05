@@ -682,61 +682,25 @@ class FitAnalyst(BaseAnalyst):
         Add points forming sequences found by the outlier and anomaly finders.
         """
 
-        #tHIS IS BROKEN, FIX THIS TOMORROW
-        print("=========================================================")
-        print(self.candidate_anomaly_seqs)
         if self.outlier_results is not None:
             self.log.debug(f"Fit Analyst: Adding outliers identified during an anomaly.")
             for entry in self.light_curves:
                 # extract np array with the light curve
                 lc_tag = f"{entry["survey"]}_{entry["band"]}"
                 lc = entry["light_curve_with_outliers"]
-                if lc_tag in self.candidate_anomaly_seqs:
+                is_outlier = self.outlier_results[lc_tag]["is_outlier"]
+                old_lc_len = len(entry["light_curve"])
+                if is_outlier is not None:
                     for anomaly_seq in self.candidate_anomaly_seqs[lc_tag]:
                         t_start = anomaly_seq["t_start"]
                         t_end = anomaly_seq["t_end"]
+                        anomalous = np.intersect1d(np.where(lc[:, 0] > t_start), np.where(lc[:, 0] < t_end))
+                        if len(anomalous) > 0:
+                            is_outlier[anomalous] = False
 
-                        lc_outlier = self.outlier_results[lc_tag]["light_curve"]
-                        lc_is_outlier = self.outlier_results[lc_tag]["is_outlier"]
-
-                        outlier_temp = [
-                            {"lc": lc_anomaly, "is_outlier": anomaly_is_outlier},
-                            {"lc": lc_outlier, "is_outlier": lc_is_outlier},
-                        ]
-                        for out in outlier_temp:
-                            print("===============================")
-                            print(tag)
-                            print("===============================")
-                            print("old light curve length", len(self.light_curves[tag]["light_curve"]))
-                            lc = out["lc"]
-                            is_outlier = out["is_outlier"]
-                            anomalous = np.intersect1d(np.where(lc[:, 0] > t_start), np.where(lc[:, 0] < t_end))
-                            if len(anomalous) > 0:
-                                is_outlier[anomalous] = False
-
-                            self.light_curves[tag]["light_curve"] = lc[~is_outlier]
-                            print("anomalous", anomalous)
-                            print("new light curve", self.light_curves[tag]["light_curve"])
-                            print("new light curve length", len(self.light_curves[tag]["light_curve"]))
-                            print("-------------------------------")
-
-
-
-                    
-                    
-                    
-                if lc_tag in self.outlier_results:
-                    outlier_flags =  self.outlier_results[lc_tag]["is_outlier"]
-                    
-                    entry["light_curve"] = lc[~outlier_flags]
-            
-        
-        for entry in self.candidate_anomaly_seqs:
-            
-                
-                
-
-
+                entry["light_curve"] = lc[~is_outlier]
+                n_returned_pts = len(entry["light_curve"]) - old_lc_len
+                self.log.debug(f"Fit Analyst: Added back {n_returned_pts} outliers which may form an anomaly.")
 
     def fit_2s1l_finished(self):
         """

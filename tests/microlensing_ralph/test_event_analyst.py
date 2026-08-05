@@ -409,6 +409,7 @@ scenario_roman = {
             "longest_sequence": 28,
         },
         "n_anomalous_points": 51,
+        "n_returned_pts": 23,
     },
 }
 
@@ -548,7 +549,7 @@ class EventAnalystTest:
         """
 
         self.event_analyst.run_lc_analyst()
-        fit_analyst = FitAnalyst(
+        self.fit_analyst = FitAnalyst(
             self.event_analyst.event_name,
             self.event_analyst.analyst_path,
             self.event_analyst.light_curves,
@@ -560,20 +561,20 @@ class EventAnalystTest:
 
         answers = self.scenario.get("answers")
 
-        for entry in fit_analyst.light_curves:
+        for entry in self.fit_analyst.light_curves:
             # extract np array with the light curve
             lc_tag = f"{entry["survey"]}_{entry["band"]}"
             lc = np.array(entry["light_curve"])
-            if lc_tag in fit_analyst.outlier_results:
-                outlier_flags =  fit_analyst.outlier_results[lc_tag]["is_outlier"]
+            if lc_tag in self.fit_analyst.outlier_results:
+                outlier_flags =  self.fit_analyst.outlier_results[lc_tag]["is_outlier"]
                 entry["light_curve_with_outliers"] = lc
                 entry["light_curve"] = lc[~outlier_flags]
 
-        fit_analyst.best_model = self.scenario.get("best_model")
-        fit_analyst.best_results = self.scenario.get("best_results")
+        self.fit_analyst.best_model = self.scenario.get("best_model")
+        self.fit_analyst.best_results = self.scenario.get("best_results")
 
-        anomaly_found = fit_analyst.perform_anomaly_finding()
-        fit_analyst.add_anomalous_points()
+        anomaly_found = self.fit_analyst.perform_anomaly_finding()
+
         assert anomaly_found is True
 
         # fpath1 = os.path.join(self.analyst_path, "af_results.npz")
@@ -607,6 +608,31 @@ class EventAnalystTest:
         #     else:
         #         assert answers[entry] == fit_analyst.n_anomalous_points
 
+    def test_add_anomalous_pts(self):
+        """
+        Test running adding back anomalous points. Run after test_anomly_finder.
+        """
+
+        old_lc_lengths = {}
+        if self.fit_analyst.outlier_results is not None:
+            for entry in self.fit_analyst.light_curves:
+                lc_tag = f"{entry["survey"]}_{entry["band"]}"
+                old_lc_lengths[lc_tag] = len(entry["light_curve"])
+
+        self.fit_analyst.add_anomalous_points()
+
+        new_lc_lengths = {}
+        if self.fit_analyst.outlier_results is not None:
+            for entry in self.fit_analyst.light_curves:
+                lc_tag = f"{entry["survey"]}_{entry["band"]}"
+                new_lc_lengths[lc_tag] = len(entry["light_curve"])
+
+        answers = self.scenario.get("answers")
+        for lc_tag in old_lc_lengths:
+            n_returned_pts = new_lc_lengths[lc_tag] - old_lc_lengths[lc_tag]
+            print(f"Lc: {lc_tag}, n_returned_pts: {n_returned_pts}")
+            assert n_returned_pts == answers["n_returned_pts"]
+
     @pytest.mark.skip(reason="This test is for debugging code only")
     def test_no_config(self):
         """
@@ -634,6 +660,7 @@ def test_run():
     test.set_up()
     test.test_parse_config()
     test.test_anomaly_finder()
+    test.test_add_anomalous_pts()
 
     # Remove created files
     # for case in [scenario_file_cat, scenario_kwu, scenario_gsa, scenario_roman]:

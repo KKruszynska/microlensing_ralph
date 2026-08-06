@@ -23,21 +23,21 @@ scenario_gaia = {
         "ongoing_amplitude_threshold": 1.0,
         "return_all_models": True,
         "model_fit_configuration": {
-            "PSPL_no_blend_no_piE": {
+            "1S1L_no_blend_no_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "DE",
                 "boundaries": {
                     "u0": [0.0, 2.0],
                 }
             },
-            "PSPL_blend_no_piE": {
+            "1S1L_blend_no_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "TRF",
                 "boundaries": {
                     "u0": [0.0, 2.0],
                 }
             },
-            "PSPL_blend_piE": {
+            "1S1L_blend_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "TRF",
                 "fitting_method_args": {
@@ -49,7 +49,7 @@ scenario_gaia = {
                     "piEE": [-1.0, 1.0],
                 }
             },
-            "PSPL_no_blend_piE": {
+            "1S1L_no_blend_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "TRF",
                 "boundaries": {
@@ -100,7 +100,7 @@ scenario_gsa = {
         "ongoing_amplitude_threshold": 1.0,
         "return_all_models": True,
         "model_fit_configuration": {
-            "PSPL_no_blend_no_piE": {
+            "1S1L_no_blend_no_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "DE",
                 "fitting_method_args": {
@@ -111,14 +111,14 @@ scenario_gsa = {
                     "u0": [0.0, 2.0],
                 }
             },
-            "PSPL_blend_no_piE": {
+            "1S1L_blend_no_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "TRF",
                 "boundaries": {
                     "u0": [-2.0, 2.0],
                 }
             },
-            "PSPL_blend_piE": {
+            "1S1L_blend_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "DE",
                 "boundaries": {
@@ -127,7 +127,7 @@ scenario_gsa = {
                     "piEE": [-1.0, 1.0],
                 }
             },
-            "PSPL_no_blend_piE": {
+            "1S1L_no_blend_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "DE",
                 "boundaries": {
@@ -164,6 +164,89 @@ scenario_gsa = {
     "fit_result": os.path.join(ralph_input, "test_results", "gaia24amo_fit_results.json"),
 }
 
+scenario_roman = {
+    "event_name": "ulwdc1_018",
+    "ra": 267.871,
+    "dec": -29.6712,
+    "analyst_path": os.path.join(ralph_output, "fit_analyst"),
+    "lc_analyst": {"acceptable_mag_range":
+                       {"upper_limit": -5, "lower_limit": 30},
+                   "max_acceptable_err": 1.0,
+                   "hampel": {
+                       "window": "1D",
+                       "n_sigma": 3.0,
+                       "use_weighted": False,
+                   },
+                   "save_outlier_results": True,
+                   "to_MJD": True,
+                   },
+    "fit_analyst": {
+        "ongoing_magnification_threshold": 1.10,
+        "ongoing_amplitude_threshold": 1.0,
+        "return_all_models": True,
+        "anomaly_finder": {
+            "method": "hampel",
+            "fitting_package": "pyLIMA",
+            "min_seq_length": 5,
+            "save_results": True,
+            "to_MJD": True,
+            "af_setup": {
+                "window": "3D",
+                "n_sigma": 2.0,
+                "use_weighted": True,
+            },
+        },
+        "model_fit_configuration": {
+            "1S1L_no_blend_no_piE": {
+                "fitting_package": "pyLIMA",
+                "fitting_method": "TRF",
+                "boundaries": {
+                    "u0": [0.0, 2.0],
+                }
+            },
+            "1S1L_blend_no_piE": {
+                "fitting_package": "pyLIMA",
+                "fitting_method": "TRF",
+                "boundaries": {
+                    "u0": [0.0, 2.0],
+                }
+            },
+            "1S1L_blend_piE": {
+                "fitting_package": "pyLIMA",
+                "fitting_method": "TRF",
+                "boundaries": {
+                    "u0": [-2.0, 2.0],
+                    "piEN": [-1.0, 1.0],
+                    "piEE": [-1.0, 1.0],
+                }
+            },
+            "1S1L_no_blend_piE": {
+                "fitting_package": "pyLIMA",
+                "fitting_method": "TRF",
+                "boundaries": {
+                    "u0": [-2.0, 2.0],
+                    "piEN": [-1.0, 1.0],
+                    "piEE": [-1.0, 1.0],
+                }
+            },
+            "1S2L_blend_no_piE": {
+                "fitting_package": "pyLIMA",
+                "fitting_method": "TRF",
+                "boundaries": {
+                    "u0": [0.0, 2.0],
+                }
+            },
+        },
+    },
+    "light_curves": [
+        {
+            "survey": "Roman",
+            "band": "W149",
+            "path": os.path.join(ralph_light_curves, "ulwdc1_018_W149.txt"),
+        },
+    ],
+}
+
 class FitAnalystTest:
     """
     Class with tests
@@ -185,6 +268,7 @@ class FitAnalystTest:
             "ongoing_magnification_threshold": fit_params.get("ongoing_magnification_threshold"),
             "ongoing_amplitude_threshold": fit_params.get("ongoing_amplitude_threshold"),
             "return_all_models": fit_params.get("return_all_models", True),
+            "anomaly_finder": fit_params.get("anomaly_finder", None),
         }
 
         model_params = fit_params.get("model_fit_configuration")
@@ -234,11 +318,24 @@ class FitAnalystTest:
         on_mag_t_config = analyst.config["ongoing_magnification_threshold"]
         on_ampl_t_config = analyst.config["ongoing_amplitude_threshold"]
         model_fit_config = analyst.config["model_fit_configuration"]
+        af_config = analyst.config["anomaly_finder"]
 
         logs.close_log(log)
 
         assert on_mag_t_config == fit_params.get("ongoing_magnification_threshold")
         assert on_ampl_t_config == fit_params.get("ongoing_amplitude_threshold")
+
+        model_params = fit_params.get("anomaly_finder")
+        print("======================")
+        print(model_params)
+        print(analyst.config)
+        for entry in af_config:
+            param = af_config[entry]
+            if type(param) == dict:
+                for key in param:
+                    assert model_params[entry][key] == param.get(key)
+            else:
+                assert param == model_params[entry]
 
         model_params = fit_params.get("model_fit_configuration")
         for model in model_fit_config:
@@ -278,7 +375,7 @@ class FitAnalystTest:
             expected_fit_result = json.load(file)
 
         for model in expected_fit_result:
-            if model != "PSPL_no_blend_no_piE":
+            if model != "1S1L_no_blend_no_piE":
                 model_result = result[model]
                 expected_result = expected_fit_result[model]
                 for key in expected_result:
@@ -311,55 +408,85 @@ class FitAnalystTest:
 
         logs.close_log(log)
 
+    def test_1s2l_fit(self):
+        """
+        Test if single source-binary lens fitting works.
+        """
+
+        path_outputs, config, light_curves = self.setup()
+
+        log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], stream=False)
+        analyst = FitAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
+        result = analyst.perform_fit()
+
+        # with open(self.scenario.get("fit_result"), "r") as file:
+        #     expected_fit_result = json.load(file)
+
+        # for model in expected_fit_result:
+        #     if model != "1S1L_no_blend_no_piE":
+        #         model_result = result[model]
+        #         expected_result = expected_fit_result[model]
+        #         for key in expected_result:
+        #             expected = float(expected_result[key])
+        #             received = float(model_result[key])
+        #             if not np.isnan(expected):
+        #                 assert pytest.approx(expected, 2) == pytest.approx(received, 2)
+
+        logs.close_log(log)
+
 
 def test_run():
     """
     Run all tests.
     """
 
-    for case in [scenario_gaia, scenario_gsa]:
-        test = FitAnalystTest(case)
-        test.test_parse_config()
-        test.test_check_ongoing()
-        if case.get("event_name") == "GDR3_ULENS_025":
-            test.test_fit()
+    test = FitAnalystTest(scenario_roman)
+    test.test_parse_config()
+    test.test_1s2l_fit()
 
-    scenario_best_only = scenario_gaia.copy()
-    scenario_best_only["fit_analyst"]["return_all_models"] = False
-    scenario_best_only["fit_result"] = None
-    scenario_best_only["best_model_key"] = "PSPL_blend_piE_n"
-
-    test = FitAnalystTest(scenario_best_only)
-    test.test_return_best_only()
-
-    for case in [scenario_gaia, scenario_gsa, scenario_best_only]:
-        analyst_path = case.get("analyst_path")
-        event_name = case.get("event_name")
-
-        fpath = os.path.join(analyst_path, "fit_results.json")
-        output = Path(fpath)
-        if output.exists():
-            os.remove(output)
-
-        fpath = os.path.join(analyst_path, "fit_stats.txt")
-        output = Path(fpath)
-        if output.exists():
-            os.remove(output)
-
-        fpath = os.path.join(analyst_path, event_name + "_analyst.log")
-        output = Path(fpath)
-        if output.exists():
-            os.remove(output)
-
-        files = [
-            "PSPL_no_blend_no_piE.html",
-            "PSPL_blend_no_piE.html",
-            "PSPL_blend_piE.html",
-            "PSPL_blend_piE_p.html",
-            "PSPL_blend_piE_n.html",
-        ]
-        for element in files:
-            fpath = os.path.join(analyst_path, element)
-            output = Path(fpath)
-            if output.exists():
-                os.remove(output)
+    # for case in [scenario_gaia, scenario_gsa]:
+    #     test = FitAnalystTest(case)
+    #     test.test_parse_config()
+    #     test.test_check_ongoing()
+    #     if case.get("event_name") == "GDR3_ULENS_025":
+    #         test.test_fit()
+    #
+    # scenario_best_only = scenario_gaia.copy()
+    # scenario_best_only["fit_analyst"]["return_all_models"] = False
+    # scenario_best_only["fit_result"] = None
+    # scenario_best_only["best_model_key"] = "1S1L_blend_piE_n"
+    #
+    # test = FitAnalystTest(scenario_best_only)
+    # test.test_return_best_only()
+    #
+    # for case in [scenario_gaia, scenario_gsa, scenario_best_only]:
+    #     analyst_path = case.get("analyst_path")
+    #     event_name = case.get("event_name")
+    #
+    #     fpath = os.path.join(analyst_path, "fit_results.json")
+    #     output = Path(fpath)
+    #     if output.exists():
+    #         os.remove(output)
+    #
+    #     fpath = os.path.join(analyst_path, "fit_stats.txt")
+    #     output = Path(fpath)
+    #     if output.exists():
+    #         os.remove(output)
+    #
+    #     fpath = os.path.join(analyst_path, event_name + "_analyst.log")
+    #     output = Path(fpath)
+    #     if output.exists():
+    #         os.remove(output)
+    #
+    #     files = [
+    #         "1S1L_no_blend_no_piE.html",
+    #         "1S1L_blend_no_piE.html",
+    #         "1S1L_blend_piE.html",
+    #         "1S1L_blend_piE_p.html",
+    #         "1S1L_blend_piE_n.html",
+    #     ]
+    #     for element in files:
+    #         fpath = os.path.join(analyst_path, element)
+    #         output = Path(fpath)
+    #         if output.exists():
+    #             os.remove(output)

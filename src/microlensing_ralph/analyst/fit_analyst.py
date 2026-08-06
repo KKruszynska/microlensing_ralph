@@ -70,13 +70,13 @@ class FitAnalyst(BaseAnalyst):
     * `model_fit_configuration`: dictionary
         A dictionary with configuration for specific types of models.
         Allowed models keywords are:
-            - `PSPL_no_blend_no_piE` - point source-point lens model without blending and
+            - `1S1L_no_blend_no_piE` - point source-point lens model without blending and
                 microlensing parallax effect;
-            - `PSPL_blend_no_piE` - point source-point lens model with blending and without
+            - `1S1L_blend_no_piE` - point source-point lens model with blending and without
                 microlensing parallax effect;
-            - `PSPL_no_blend_piE` - point source-point lens model without blending and with
+            - `1S1L_no_blend_piE` - point source-point lens model without blending and with
                 microlensing parallax effect;
-            - `PSPL_blend_piE` - point source-point lens model with blending and
+            - `1S1L_blend_piE` - point source-point lens model with blending and
                 microlensing parallax effect;
         For each model the User can specify following keywords:
             - `fitting_package` - str, name of the fitting package supported by `microlensing_ralph`;
@@ -151,6 +151,9 @@ class FitAnalyst(BaseAnalyst):
             "return_all_models", True
         )
 
+        print("====================================")
+        print(config["fit_analyst"])
+        print("====================================")
         self.config["anomaly_finder"] = config["fit_analyst"].get("anomaly_finder", None)
 
         params = {}
@@ -162,7 +165,7 @@ class FitAnalyst(BaseAnalyst):
 
         self.log.debug("Fit Analyst: Finished reading fit config.")
 
-    def fit_pspl(
+    def fit_event(
         self,
         fit_label,
         fit_name,
@@ -173,7 +176,7 @@ class FitAnalyst(BaseAnalyst):
         use_boundaries=None,
     ):
         """
-        Perform a point source-point lens (PSPL) fit.
+        Find a best-fitting model of specified type for an event.
 
         :param fit_label: The label of the model to be fitted.
         :type fit_label: str
@@ -226,50 +229,120 @@ class FitAnalyst(BaseAnalyst):
 
             if fitting_package.lower() == "pylima":
                 if fitting_args is not None:
-                    fit_pspl = pylima.fit_pylima.FitPylima(self.log)
-                    results = fit_pspl.fit_pspl(
-                        fit_name,
-                        self.light_curves,
-                        starting_params,
-                        parallax,
-                        blend,
-                        return_norm_lc=return_norm_lc,
-                        fitting_method=fitting_method,
-                        use_boundaries=boundaries,
-                        **fitting_args
-                    )
+                    fit_event = pylima.fit_pylima.FitPylima(self.log)
+                    if "1S1L" in fit_label:
+                        results = fit_event.fit_1S1L(
+                            fit_name,
+                            self.light_curves,
+                            starting_params,
+                            parallax,
+                            blend,
+                            return_norm_lc=return_norm_lc,
+                            fitting_method=fitting_method,
+                            use_boundaries=boundaries,
+                            **fitting_args
+                        )
+                    # elif "2S1L" in fit_label:
+                    #     results = fit_event.fit_2S1L(
+                    #         fit_name,
+                    #         self.light_curves,
+                    #         starting_params,
+                    #         parallax,
+                    #         blend,
+                    #         return_norm_lc=return_norm_lc,
+                    #         fitting_method=fitting_method,
+                    #         use_boundaries=boundaries,
+                    #         **fitting_args
+                    #     )
+                    elif "1S2L" in fit_label:
+                        results = fit_event.fit_1S2L(
+                            fit_name,
+                            self.light_curves,
+                            starting_params,
+                            parallax,
+                            blend,
+                            return_norm_lc=return_norm_lc,
+                            fitting_method=fitting_method,
+                            use_boundaries=boundaries,
+                            **fitting_args
+                        )
                 else:
-                    fit_pspl = pylima.fit_pylima.FitPylima(self.log)
-                    results = fit_pspl.fit_pspl(
-                        fit_name,
-                        self.light_curves,
-                        starting_params,
-                        parallax,
-                        blend,
-                        return_norm_lc=return_norm_lc,
-                        fitting_method=fitting_method,
-                        use_boundaries=boundaries,
-                    )
+                    fit_event = pylima.fit_pylima.FitPylima(self.log)
+                    if "1S1L" in fit_label:
+                        results = fit_event.fit_1S1L(
+                            fit_name,
+                            self.light_curves,
+                            starting_params,
+                            parallax,
+                            blend,
+                            return_norm_lc=return_norm_lc,
+                            fitting_method=fitting_method,
+                            use_boundaries=boundaries,
+                        )
+                    # elif "2S1L" in fit_label:
+                    #     results = fit_event.fit_2S1L(
+                    #         fit_name,
+                    #         self.light_curves,
+                    #         starting_params,
+                    #         parallax,
+                    #         blend,
+                    #         return_norm_lc=return_norm_lc,
+                    #         fitting_method=fitting_method,
+                    #         use_boundaries=boundaries,
+                    #     )
+                    elif "1S2L" in fit_label:
+                        results = fit_event.fit_1S2L(
+                            fit_name,
+                            self.light_curves,
+                            starting_params,
+                            parallax,
+                            blend,
+                            return_norm_lc=return_norm_lc,
+                            fitting_method=fitting_method,
+                            use_boundaries=boundaries,
+                        )
         else:
             self.log.info("Fit Analyst: Using default fitting setup.")
             self.log.debug("Fit Analyst: Set up: fitting package: pyLIMA, "
                            "fitting method: TRF."
                            )
-
-            fit_pspl = pylima.fit_pylima.FitPylima(self.log)
-            results = fit_pspl.fit_pspl(
-                fit_name,
-                self.light_curves,
-                starting_params,
-                parallax,
-                blend,
-                return_norm_lc=return_norm_lc,
-                use_boundaries=use_boundaries,
-            )
+            fit_event = pylima.fit_pylima.FitPylima(self.log)
+            if "1S1L" in fit_label:
+                results = fit_event.fit_1S1L(
+                    fit_name,
+                    self.light_curves,
+                    starting_params,
+                    parallax,
+                    blend,
+                    return_norm_lc=return_norm_lc,
+                    use_boundaries=use_boundaries,
+                )
+            # elif "2S1L" in fit_label:
+            #     results = fit_event.fit_2S1L(
+            #         fit_name,
+            #         self.light_curves,
+            #         starting_params,
+            #         parallax,
+            #         blend,
+            #         return_norm_lc=return_norm_lc,
+            #         use_boundaries=use_boundaries,
+            #     )
+            elif "1S2L" in fit_label:
+                results = fit_event.fit_1S2L(
+                    fit_name,
+                    self.light_curves,
+                    starting_params,
+                    parallax,
+                    blend,
+                    return_norm_lc=return_norm_lc,
+                    use_boundaries=use_boundaries,
+                )
 
         self.log.debug(f"Fit Analyst: Time elapsed for fitting: {time.time() - self.start_time:.2f} s")
 
         return results
+
+
 
     def perform_ongoing_check(self):
         """
@@ -284,7 +357,7 @@ class FitAnalyst(BaseAnalyst):
             f"Fit Analyst: Time elapsed for setting up the analyst: {time.time() - self.start_time:.2f} s"
         )
         self.log.info("Fit Analyst: Starting ongoing check fit.")
-        self.log.info("Fit Analyst:  Find PSPL starting parameters.")
+        self.log.info("Fit Analyst:  Find 1S1L starting parameters.")
 
         time_of_peak = analyst_tools.find_time_of_peak(
             self.light_curves,
@@ -299,38 +372,38 @@ class FitAnalyst(BaseAnalyst):
             "tE": 40.0,
         }
 
-        self.log.info("Fit Analyst: Performing PSPL fit without blend and parallax.")
-        results = self.fit_pspl(
-            "PSPL_no_blend_no_piE",
-            os.path.join(self.analyst_path, "PSPL_no_blend_no_piE"),
+        self.log.info("Fit Analyst: Performing 1S1L fit without blend and parallax.")
+        results = self.fit_event(
+            "1S1L_no_blend_no_piE",
+            os.path.join(self.analyst_path, "1S1L_no_blend_no_piE"),
             starting_params,
             False,
             False,
             return_norm_lc=True,
         )
 
-        fit_params_pspl_nopar = results[0]
-        t_0 = fit_params_pspl_nopar["t0"]
+        fit_params_1S1L_nopar = results[0]
+        t_0 = fit_params_1S1L_nopar["t0"]
         aligned_data, residuals = results[1], results[2]
         self.log.info("Fit Analyst:  Finished fitting.")
 
         # Saving the result not to perform this fit again
-        self.best_results["PSPL_no_blend_no_piE"] = fit_params_pspl_nopar
+        self.best_results["1S1L_no_blend_no_piE"] = fit_params_1S1L_nopar
 
         self.log.info("Fit Analyst: Identify ongoing event.")
-        baseline_mag = fit_params_pspl_nopar["baseline_magnitude"]
+        baseline_mag = fit_params_1S1L_nopar["baseline_magnitude"]
         self.start_time = time.time()
 
-        # todo: this currently supports only PSPL, but it should support more models,
+        # todo: this currently supports only 1S1L, but it should support more models,
         #  if we have them from the past. This should be consulted with the system
         #  flowchart though.
 
         ongoing_ampl, t_last = analyst_tools.check_ongoing_amplitude(
             self.config["ongoing_amplitude_threshold"], aligned_data, residuals, baseline_mag
         )
-        ongoing_time = analyst_tools.check_ongoing_time(fit_params_pspl_nopar, t_last)
+        ongoing_time = analyst_tools.check_ongoing_time(fit_params_1S1L_nopar, t_last)
         ongoing_mag = analyst_tools.check_ongoing_magnification(
-            self.config["ongoing_magnification_threshold"], fit_params_pspl_nopar, t_last
+            self.config["ongoing_magnification_threshold"], fit_params_1S1L_nopar, t_last
         )
         self.log.debug(f"Fit Analyst: Time of the last data point: {t_last}")
         self.log.debug(
@@ -359,52 +432,52 @@ class FitAnalyst(BaseAnalyst):
         """
 
         self.log.info("Fit Analyst: Starting ongoing event fit.")
-        self.log.info("Fit Analyst: Finding PSPL starting parameters.")
+        self.log.info("Fit Analyst: Finding 1S1L starting parameters.")
         starting_params = {
             "ra": self.config["ra"],
             "dec": self.config["dec"],
             "t0": t_0,
-            "u0": self.best_results["PSPL_no_blend_no_piE"].get("u0"),
-            "tE": self.best_results["PSPL_no_blend_no_piE"].get("tE"),
+            "u0": self.best_results["1S1L_no_blend_no_piE"].get("u0"),
+            "tE": self.best_results["1S1L_no_blend_no_piE"].get("tE"),
         }
 
-        self.log.info("Fit Analyst: Performing PSPL fit.")
-        results = self.fit_pspl(
-            "PSPL_blend_no_piE",
-            os.path.join(self.analyst_path, "PSPL_blend_no_piE"),
+        self.log.info("Fit Analyst: Performing 1S1L fit.")
+        results = self.fit_event(
+            "1S1L_blend_no_piE",
+            os.path.join(self.analyst_path, "1S1L_blend_no_piE"),
             starting_params,
             False,
             True,
         )
-        self.best_results["PSPL_blend_no_piE"] = results
+        self.best_results["1S1L_blend_no_piE"] = results
 
-        self.log.info("Fit Analyst: Performing PSPL+piE fit.")
+        self.log.info("Fit Analyst: Performing 1S1L+piE fit.")
         starting_params["t0"] = results["t0"]
         starting_params["piEN"] = 0.0
         starting_params["piEE"] = 0.0
 
-        results = self.fit_pspl(
-            "PSPL_blend_piE",
-            os.path.join(self.analyst_path, "PSPL_blend_piE"),
+        results = self.fit_event(
+            "1S1L_blend_piE",
+            os.path.join(self.analyst_path, "1S1L_blend_piE"),
             starting_params,
             True,
             True,
         )
-        self.best_results["PSPL_blend_piE"] = results
+        self.best_results["1S1L_blend_piE"] = results
 
-        self.log.info("Fit Analyst: Evaluate PSPL+piE fit.")
-        model_ok = self.evaluate_pspl(results)
+        self.log.info("Fit Analyst: Evaluate 1S1L+piE fit.")
+        model_ok = self.evaluate_1S1L(results)
 
         if not model_ok:
-            self.log.info("Fit Analyst: Bad model with blending, performing PSPL+piE fit without blending.")
-            results = self.fit_pspl(
-                "PSPL_no_blend_piE",
-                os.path.join(self.analyst_path,  "PSPL_no_blend_piE"),
+            self.log.info("Fit Analyst: Bad model with blending, performing 1S1L+piE fit without blending.")
+            results = self.fit_event(
+                "1S1L_no_blend_piE",
+                os.path.join(self.analyst_path,  "1S1L_no_blend_piE"),
                 starting_params,
                 True,
                 False,
             )
-            self.best_results["PSPL_no_blend_piE"] = results
+            self.best_results["1S1L_no_blend_piE"] = results
 
         self.log.info("Fit Analyst: Finished fitting.")
         self.log.debug("Best models:", self.best_results)
@@ -421,85 +494,85 @@ class FitAnalyst(BaseAnalyst):
         """
 
         self.log.info("Fit Analyst: Starting finished event fit.")
-        self.log.info("Fit Analyst: Finding PSPL starting parameters.")
+        self.log.info("Fit Analyst: Finding 1S1L starting parameters.")
         starting_params = {
             "ra": self.config["ra"],
             "dec": self.config["dec"],
             "t0": t_0,
-            "u0": self.best_results["PSPL_no_blend_no_piE"].get("u0"),
-            "tE": self.best_results["PSPL_no_blend_no_piE"].get("tE"),
+            "u0": self.best_results["1S1L_no_blend_no_piE"].get("u0"),
+            "tE": self.best_results["1S1L_no_blend_no_piE"].get("tE"),
         }
 
-        self.log.info("Fit Analyst:Performing PSPL with blend fit.")
-        results = self.fit_pspl(
-            "PSPL_blend_no_piE",
-            os.path.join(self.analyst_path, "PSPL_blend_no_piE"),
+        self.log.info("Fit Analyst:Performing 1S1L with blend fit.")
+        results = self.fit_event(
+            "1S1L_blend_no_piE",
+            os.path.join(self.analyst_path, "1S1L_blend_no_piE"),
             starting_params,
             False,
             True,
         )
-        self.best_results["PSPL_blend_no_piE"] = results
-        self.log.info("Fit Analyst: Finished fitting PSPL with blend fit.")
+        self.best_results["1S1L_blend_no_piE"] = results
+        self.log.info("Fit Analyst: Finished fitting 1S1L with blend fit.")
 
-        self.log.info("Fit Analyst: Performing PSPL+piE fit.")
+        self.log.info("Fit Analyst: Performing 1S1L+piE fit.")
 
         starting_params = {
             "ra": self.config["ra"],
             "dec": self.config["dec"],
-            "t0": self.best_results["PSPL_blend_no_piE"]["t0"],
-            "u0": self.best_results["PSPL_blend_no_piE"]["u0"],
-            "tE": self.best_results["PSPL_blend_no_piE"]["tE"],
+            "t0": self.best_results["1S1L_blend_no_piE"]["t0"],
+            "u0": self.best_results["1S1L_blend_no_piE"]["u0"],
+            "tE": self.best_results["1S1L_blend_no_piE"]["tE"],
             "piEN": 0.0,
             "piEE": 0.0,
         }
         sign = "p" if np.sign(starting_params["u0"]) > 0 else "n"
-        self.log.info(f"Fit Analyst: Starting fitting model PSPL_blend_piE_{sign}")
+        self.log.info(f"Fit Analyst: Starting fitting model 1S1L_blend_piE_{sign}")
         boundaries = {
             "u0": [0.0, 2.0],
             "tE": [0.0, 1000.0],
             "piEN": [-2.0, 2.0],
             "piEE": [-2.0, 2.0],
         }
-        results = self.fit_pspl(
-            "PSPL_blend_piE",
-            os.path.join(self.analyst_path, "PSPL_blend_piE_" + sign),
+        results = self.fit_event(
+            "1S1L_blend_piE",
+            os.path.join(self.analyst_path, "1S1L_blend_piE_" + sign),
             starting_params,
             True,
             True,
             use_boundaries=boundaries,
         )
-        self.best_results["PSPL_blend_piE_" + sign] = results
+        self.best_results["1S1L_blend_piE_" + sign] = results
 
-        self.log.info(f"Fit Analyst:  Finished fitting model PSPL_blend_piE_{sign}")
+        self.log.info(f"Fit Analyst:  Finished fitting model 1S1L_blend_piE_{sign}")
 
         starting_params = {
             "ra": self.config["ra"],
             "dec": self.config["dec"],
-            "t0": self.best_results["PSPL_blend_piE_" + sign]["t0"],
-            "u0": -1 * self.best_results["PSPL_blend_piE_" + sign]["u0"],
-            "tE": self.best_results["PSPL_blend_piE_" + sign]["tE"],
-            "piEN": self.best_results["PSPL_blend_piE_" + sign]["piEN"],
-            "piEE": self.best_results["PSPL_blend_piE_" + sign]["piEE"],
+            "t0": self.best_results["1S1L_blend_piE_" + sign]["t0"],
+            "u0": -1 * self.best_results["1S1L_blend_piE_" + sign]["u0"],
+            "tE": self.best_results["1S1L_blend_piE_" + sign]["tE"],
+            "piEN": self.best_results["1S1L_blend_piE_" + sign]["piEN"],
+            "piEE": self.best_results["1S1L_blend_piE_" + sign]["piEE"],
         }
         sign = "p" if np.sign(starting_params["u0"]) > 0 else "n"
-        self.log.info(f"Fit Analyst: Starting fitting model PSPL_blend_piE_{sign}")
+        self.log.info(f"Fit Analyst: Starting fitting model 1S1L_blend_piE_{sign}")
 
         boundaries["u0"] =  [-2.0, 0.0]
 
-        results = self.fit_pspl(
-            "PSPL_blend_piE",
-            os.path.join(self.analyst_path, "PSPL_blend_piE_" + sign),
+        results = self.fit_event(
+            "1S1L_blend_piE",
+            os.path.join(self.analyst_path, "1S1L_blend_piE_" + sign),
             starting_params,
             True,
             True,
             use_boundaries=boundaries,
         )
-        self.best_results["PSPL_blend_piE_" + sign] = results
+        self.best_results["1S1L_blend_piE_" + sign] = results
 
-        self.log.info(f"Fit Analyst:  Finished fitting model PSPL_blend_piE_{sign}")
+        self.log.info(f"Fit Analyst:  Finished fitting model 1S1L_blend_piE_{sign}")
 
 
-    def evaluate_pspl(self, model_params):
+    def evaluate_1S1L(self, model_params):
         """
         Checks if best-fitting solution for a particular model has Einstein timescale, source magnitude,
         and, if available, blend magnitude within three-sigma.
@@ -679,13 +752,13 @@ class FitAnalyst(BaseAnalyst):
 
     def add_anomalous_points(self):
         """
-        Add points forming sequences found by the outlier and anomaly finders.
+        Adds back points that were found to be outliers occurring during
+        a detected anomaly.
         """
 
         if self.outlier_results is not None:
             self.log.debug(f"Fit Analyst: Adding outliers identified during an anomaly.")
             for entry in self.light_curves:
-                # extract np array with the light curve
                 lc_tag = f"{entry["survey"]}_{entry["band"]}"
                 lc = entry["light_curve_with_outliers"]
                 is_outlier = self.outlier_results[lc_tag]["is_outlier"]
@@ -702,15 +775,173 @@ class FitAnalyst(BaseAnalyst):
                 n_returned_pts = len(entry["light_curve"]) - old_lc_len
                 self.log.debug(f"Fit Analyst: Added back {n_returned_pts} outliers which may form an anomaly.")
 
-    def fit_2s1l_finished(self):
-        """
-        Fit binary source model.
-        """
+    # def fit_2s1l_finished(self):
+    #     """
+    #     Fit binary source model.
+    #     """
+    #
+    #     self.log.info("Fit Analyst: Starting finished event fit -- binary source, single lens.")
+    #     self.log.info("Fit Analyst: Finding 2S1L starting parameters.")
+    #     starting_params = {
+    #         "ra": self.config["ra"],
+    #         "dec": self.config["dec"],
+    #         "t0": self.best_results[self.best_model].get("t_0"),
+    #         "u0": self.best_results[self.best_model].get("u0"),
+    #         "tE": self.best_results[self.best_model].get("tE"),
+    #     }
+    #
+    #     self.log.info("Fit Analyst: Performing 2S1L with blend fit.")
+    #     results = self.fit_event(
+    #         "2S1L_blend_no_piE",
+    #         os.path.join(self.analyst_path, "2S1L_blend_no_piE"),
+    #         starting_params,
+    #         False,
+    #         True,
+    #     )
+    #     self.best_results["2S1L_blend_no_piE"] = results
+    #     self.log.info("Fit Analyst: Finished fitting 2S1L with blend fit.")
+
+        # self.log.info("Fit Analyst: Performing 2S1L+piE fit.")
+        #
+        # starting_params = {
+        #     "ra": self.config["ra"],
+        #     "dec": self.config["dec"],
+        #     "t0": self.best_results["1S1L_blend_no_piE"]["t0"],
+        #     "u0": self.best_results["1S1L_blend_no_piE"]["u0"],
+        #     "tE": self.best_results["1S1L_blend_no_piE"]["tE"],
+        #     "piEN": 0.0,
+        #     "piEE": 0.0,
+        # }
+        # sign = "p" if np.sign(starting_params["u0"]) > 0 else "n"
+        # self.log.info(f"Fit Analyst: Starting fitting model 1S1L_blend_piE_{sign}")
+        # boundaries = {
+        #     "u0": [0.0, 2.0],
+        #     "tE": [0.0, 1000.0],
+        #     "piEN": [-2.0, 2.0],
+        #     "piEE": [-2.0, 2.0],
+        # }
+        # results = self.fit_1S1L(
+        #     "1S1L_blend_piE",
+        #     os.path.join(self.analyst_path, "1S1L_blend_piE_" + sign),
+        #     starting_params,
+        #     True,
+        #     True,
+        #     use_boundaries=boundaries,
+        # )
+        # self.best_results["1S1L_blend_piE_" + sign] = results
+        #
+        # self.log.info(f"Fit Analyst:  Finished fitting model 1S1L_blend_piE_{sign}")
+        #
+        # starting_params = {
+        #     "ra": self.config["ra"],
+        #     "dec": self.config["dec"],
+        #     "t0": self.best_results["1S1L_blend_piE_" + sign]["t0"],
+        #     "u0": -1 * self.best_results["1S1L_blend_piE_" + sign]["u0"],
+        #     "tE": self.best_results["1S1L_blend_piE_" + sign]["tE"],
+        #     "piEN": self.best_results["1S1L_blend_piE_" + sign]["piEN"],
+        #     "piEE": self.best_results["1S1L_blend_piE_" + sign]["piEE"],
+        # }
+        # sign = "p" if np.sign(starting_params["u0"]) > 0 else "n"
+        # self.log.info(f"Fit Analyst: Starting fitting model 1S1L_blend_piE_{sign}")
+        #
+        # boundaries["u0"] = [-2.0, 0.0]
+        #
+        # results = self.fit_1S1L(
+        #     "1S1L_blend_piE",
+        #     os.path.join(self.analyst_path, "1S1L_blend_piE_" + sign),
+        #     starting_params,
+        #     True,
+        #     True,
+        #     use_boundaries=boundaries,
+        # )
+        # self.best_results["1S1L_blend_piE_" + sign] = results
+        #
+        # self.log.info(f"Fit Analyst:  Finished fitting model 1S1L_blend_piE_{sign}")
+
 
     def fit_1s2l_finished(self):
         """
-        Fit binary lens model.
+        Find best-fitting binary lens model.
         """
+
+        self.log.info("Fit Analyst: Starting finished event fit -- single source, binary lens.")
+
+        self.log.info("Fit Analyst: Finding 2S1L starting parameters.")
+        starting_params = {
+            "ra": self.config["ra"],
+            "dec": self.config["dec"],
+            "t0": self.best_results[self.best_model].get("t_0"),
+            "u0": self.best_results[self.best_model].get("u0"),
+            "tE": self.best_results[self.best_model].get("tE"),
+        }
+
+        self.log.info("Fit Analyst: Performing 2S1L with blend fit.")
+        results = self.fit_event(
+            "2S1L_blend_no_piE",
+            os.path.join(self.analyst_path, "2S1L_blend_no_piE"),
+            starting_params,
+            False,
+            True,
+        )
+        self.best_results["2S1L_blend_no_piE"] = results
+        self.log.info("Fit Analyst: Finished fitting 2S1L with blend fit.")
+
+        # self.log.info("Fit Analyst: Performing 2S1L+piE fit.")
+        #
+        # starting_params = {
+        #     "ra": self.config["ra"],
+        #     "dec": self.config["dec"],
+        #     "t0": self.best_results["1S1L_blend_no_piE"]["t0"],
+        #     "u0": self.best_results["1S1L_blend_no_piE"]["u0"],
+        #     "tE": self.best_results["1S1L_blend_no_piE"]["tE"],
+        #     "piEN": 0.0,
+        #     "piEE": 0.0,
+        # }
+        # sign = "p" if np.sign(starting_params["u0"]) > 0 else "n"
+        # self.log.info(f"Fit Analyst: Starting fitting model 1S1L_blend_piE_{sign}")
+        # boundaries = {
+        #     "u0": [0.0, 2.0],
+        #     "tE": [0.0, 1000.0],
+        #     "piEN": [-2.0, 2.0],
+        #     "piEE": [-2.0, 2.0],
+        # }
+        # results = self.fit_1S1L(
+        #     "1S1L_blend_piE",
+        #     os.path.join(self.analyst_path, "1S1L_blend_piE_" + sign),
+        #     starting_params,
+        #     True,
+        #     True,
+        #     use_boundaries=boundaries,
+        # )
+        # self.best_results["1S1L_blend_piE_" + sign] = results
+        #
+        # self.log.info(f"Fit Analyst:  Finished fitting model 1S1L_blend_piE_{sign}")
+        #
+        # starting_params = {
+        #     "ra": self.config["ra"],
+        #     "dec": self.config["dec"],
+        #     "t0": self.best_results["1S1L_blend_piE_" + sign]["t0"],
+        #     "u0": -1 * self.best_results["1S1L_blend_piE_" + sign]["u0"],
+        #     "tE": self.best_results["1S1L_blend_piE_" + sign]["tE"],
+        #     "piEN": self.best_results["1S1L_blend_piE_" + sign]["piEN"],
+        #     "piEE": self.best_results["1S1L_blend_piE_" + sign]["piEE"],
+        # }
+        # sign = "p" if np.sign(starting_params["u0"]) > 0 else "n"
+        # self.log.info(f"Fit Analyst: Starting fitting model 1S1L_blend_piE_{sign}")
+        #
+        # boundaries["u0"] = [-2.0, 0.0]
+        #
+        # results = self.fit_1S1L(
+        #     "1S1L_blend_piE",
+        #     os.path.join(self.analyst_path, "1S1L_blend_piE_" + sign),
+        #     starting_params,
+        #     True,
+        #     True,
+        #     use_boundaries=boundaries,
+        # )
+        # self.best_results["1S1L_blend_piE_" + sign] = results
+        #
+        # self.log.info(f"Fit Analyst:  Finished fitting model 1S1L_blend_piE_{sign}")
 
     def perform_fit(self):
         """
@@ -721,9 +952,6 @@ class FitAnalyst(BaseAnalyst):
             a dictionary only with the best fitting model.
         :rtype: dict
         """
-
-        # TODO: Add sorting input into a pd.DataFrame required by SIGNALMEN and check if
-        #       outlier sequences are occurring at the same time.
 
         # First I will mask outliers before initial fits. They will be re-evaluated
         # later.
@@ -757,12 +985,13 @@ class FitAnalyst(BaseAnalyst):
             self.fit_1s1l_finished(t_0)
             self.best_model = self.evaluate_models()
             # perform anomaly finder on best model
+            print(self.config.get("anomaly_finder"))
             if self.config.get("anomaly_finder", None) is not None:
                 anomaly_found = self.perform_anomaly_finding()
                 if anomaly_found:
                     self.log.debug(f"Fit Analyst: Multiple source and multiple lens fit will be performed.")
                     self.add_anomalous_points()
-                    # self.fit_2s1l_finished()
+                    self.fit_2s1l_finished()
                     # self.fit_1s2l_finished()
                     # add anomalous points back into the light curve, they are not outliers
             # if anomaly: perform_finished_fit_multiple()

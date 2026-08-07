@@ -233,7 +233,7 @@ scenario_roman = {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "TRF",
                 "boundaries": {
-                    "u0": [0.0, 2.0],
+                    "u0": [0.0, 2.5],
                 }
             },
         },
@@ -247,13 +247,101 @@ scenario_roman = {
     ],
 }
 
+answers_roman = {
+    "best_model": "1S1L_blend_piE_p",
+    "best_results": {
+        "1S1L_blend_piE_p": {
+            "t0_par": 2458752,
+            "t0": 2458743.906,
+            "t0_error": 0.026,
+            "u0": 0.01155,
+            "u0_error": 0.00092,
+            "tE": 1000.0,
+            "tE_error": 79.807,
+            "piEN": -0.40413,
+            "piEN_error": 0.03165,
+            "piEE": -0.17856,
+            "piEE_error": 0.01415,
+            "fsource_Roman_W149": 2.92895,
+            "fsource_Roman_W149_error": 0.23624,
+            "fsource_Roman_W149_mag": 26.233,
+            "fsource_Roman_W149_mag_error": 0.088,
+            "ftotal_Roman_W149": 991.89766,
+            "ftotal_Roman_W149_error": 0.07052,
+            "ftotal_Roman_W149_mag": 19.909,
+            "ftotal_Roman_W149_mag_error": 0.0,
+            "chi2": 180988.529,
+            "fblend_Roman_W149": 988.96871,
+            "fblend_Roman_W149_error": 0.24654088504749067,
+            "fblend_Roman_W149_mag": 19.912,
+            "fblend_Roman_W149_mag_error": 0.0,
+            "source_magnitude": 26.233,
+            "source_mag_error": 0.088,
+            "blend_magnitude": 19.912,
+            "blend_mag_error": 0.0,
+            "baseline_magnitude": 19.909,
+            "baseline_mag_error": 0.0,
+            "red_chi2": 4.716,
+            "sw_test": 0.45,
+            "ad_test": 2922.717,
+            "ks_test": 0.024,
+            "aic_test": 181002.529,
+            "bic_test": 181062.417
+        },
+        "1S1L_blend_no_piE": {
+            "t0_par": 0.0,
+            "t0": 2458752.435,
+            "t0_error": 0.057,
+            "u0": 2.0,
+            "u0_error": 0.80815,
+            "tE": 13.841,
+            "tE_error": 4.288,
+            "fsource_Roman_W149": 3599.12167,
+            "fsource_Roman_W149_error": 4231.37257,
+            "fsource_Roman_W149_mag": 18.51,
+            "fsource_Roman_W149_mag_error": 1.276,
+            "ftotal_Roman_W149": 992.20907,
+            "ftotal_Roman_W149_error": 0.06583,
+            "ftotal_Roman_W149_mag": 19.908,
+            "ftotal_Roman_W149_mag_error": 0.0,
+            "chi2": 3519971.436,
+            "fblend_Roman_W149": -2606.9126,
+            "fblend_Roman_W149_error": 4231.372570512079,
+            "fblend_Roman_W149_mag": np.nan,
+            "fblend_Roman_W149_mag_error": 1.762,
+            "source_magnitude": 18.51,
+            "source_mag_error": 1.276,
+            "blend_magnitude": np.nan,
+            "blend_mag_error": 1.762,
+            "baseline_magnitude": 19.908,
+            "baseline_mag_error": 0.0,
+            "red_chi2": 91.278,
+            "sw_test": 0.136,
+            "ad_test": 9928.424,
+            "ks_test": 0.047,
+            "aic_test": 3519981.436,
+            "bic_test": 3520024.237
+        },
+    },
+    "outlier_results_path": os.path.join(ralph_input, "test_results", "ulwdc1_018_outlier_results.npz"),
+    "outlier_seqs": {
+        "Roman_W149": [{
+            "t_start": 2458743.874974,
+            "t_end": 2458744.146987,
+            "sequence_length": 23
+        }]
+    }
+}
+
 class FitAnalystTest:
     """
     Class with tests
     """
 
-    def __init__(self, scenario):
+    def __init__(self, scenario, answers=None):
         self.scenario = scenario
+        if answers is not None:
+            self.answer = answers
 
     def setup(self):
         config = {
@@ -318,7 +406,7 @@ class FitAnalystTest:
         on_mag_t_config = analyst.config["ongoing_magnification_threshold"]
         on_ampl_t_config = analyst.config["ongoing_amplitude_threshold"]
         model_fit_config = analyst.config["model_fit_configuration"]
-        af_config = analyst.config["anomaly_finder"]
+        af_config = analyst.config.get("anomaly_finder", None)
 
         logs.close_log(log)
 
@@ -326,16 +414,14 @@ class FitAnalystTest:
         assert on_ampl_t_config == fit_params.get("ongoing_amplitude_threshold")
 
         model_params = fit_params.get("anomaly_finder")
-        print("======================")
-        print(model_params)
-        print(analyst.config)
-        for entry in af_config:
-            param = af_config[entry]
-            if type(param) == dict:
-                for key in param:
-                    assert model_params[entry][key] == param.get(key)
-            else:
-                assert param == model_params[entry]
+        if af_config is not None:
+            for entry in af_config:
+                param = af_config[entry]
+                if type(param) == dict:
+                    for key in param:
+                        assert model_params[entry][key] == param.get(key)
+                else:
+                    assert param == model_params[entry]
 
         model_params = fit_params.get("model_fit_configuration")
         for model in model_fit_config:
@@ -414,10 +500,26 @@ class FitAnalystTest:
         """
 
         path_outputs, config, light_curves = self.setup()
+        data = np.load(self.answer.get("outlier_results_path"), allow_pickle=True)
+        outlier_results = data["arr_0"][()]
 
         log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], stream=False)
-        analyst = FitAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
-        result = analyst.perform_fit()
+        analyst = FitAnalyst(config["event_name"],
+                             path_outputs,
+                             light_curves,
+                             log,
+                             config_dict=config,
+                             outlier_results=outlier_results,
+                             outlier_seqs=self.answer.get("outlier_seqs"),
+                             )
+
+        analyst.best_model = self.answer.get("best_model")
+        analyst.best_results = self.answer.get("best_results")
+
+        anomaly_found = analyst.perform_anomaly_finding()
+        assert anomaly_found
+
+        analyst.fit_1s2l_finished()
 
         # with open(self.scenario.get("fit_result"), "r") as file:
         #     expected_fit_result = json.load(file)
@@ -440,7 +542,7 @@ def test_run():
     Run all tests.
     """
 
-    test = FitAnalystTest(scenario_roman)
+    test = FitAnalystTest(scenario_roman, answers=answers_roman)
     test.test_parse_config()
     test.test_1s2l_fit()
 

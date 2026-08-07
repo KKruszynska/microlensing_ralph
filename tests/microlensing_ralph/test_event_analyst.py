@@ -313,8 +313,8 @@ scenario_roman = {
                 "save_results": True,
                 "to_MJD": True,
                 "af_setup": {
-                    "window": "3D",
-                    "n_sigma": 2.0,
+                    "window": "7D",
+                    "n_sigma": 3.0,
                     "use_weighted": True,
                 },
             },
@@ -404,11 +404,11 @@ scenario_roman = {
     },
     "answers": {
         "Roman_W149": {
-            "af_n_pts": 1733,
-            "af_sequences": 82,
-            "longest_sequence": 28,
+            "af_n_pts": 129,
+            "af_sequences": 2,
+            "longest_sequence": 84,
         },
-        "n_anomalous_points": 51,
+        "n_anomalous_points": 107,
         "n_returned_pts": 23,
     },
 }
@@ -577,36 +577,36 @@ class EventAnalystTest:
 
         assert anomaly_found is True
 
-        # fpath1 = os.path.join(self.analyst_path, "af_results.npz")
-        # fpath2 = os.path.join(self.analyst_path, "af_sequences.json")
-        # for fpath in [fpath1, fpath2]:
-        #     output = Path(fpath)
-        #     assert output.exists() is True
-        #     assert output.is_file() is True
-        #
-        # for entry in answers:
-        #     if type(answers[entry]) == type({}):
-        #         n_anomalous_pts = answers[entry]["af_n_pts"]
-        #         af_sequences = answers[entry]["af_sequences"]
-        #         longest_sequence = answers[entry]["longest_sequence"]
-        #
-        #         outs = np.count_nonzero(fit_analyst.anomaly_results[entry]["is_outlier"])
-        #         n_seqs = len(fit_analyst.anomaly_seqs[entry])
-        #         l_seq = 0
-        #         for seq in fit_analyst.anomaly_seqs[entry]:
-        #             if seq["sequence_length"] > l_seq:
-        #                 l_seq = seq["sequence_length"]
-        #
-        #         assert n_anomalous_pts == outs
-        #         assert af_sequences == n_seqs
-        #         assert longest_sequence == l_seq
-        #
-        #         fpath = os.path.join(self.analyst_path, f"af_results_{entry}.html")
-        #         output = Path(fpath)
-        #         assert output.exists() is True
-        #         assert output.is_file() is True
-        #     else:
-        #         assert answers[entry] == fit_analyst.n_anomalous_points
+        fpath1 = os.path.join(self.analyst_path, "af_results.npz")
+        fpath2 = os.path.join(self.analyst_path, "af_sequences.json")
+        for fpath in [fpath1, fpath2]:
+            output = Path(fpath)
+            assert output.exists() is True
+            assert output.is_file() is True
+
+        for entry in answers:
+            if type(answers[entry]) == type({}):
+                n_anomalous_pts = answers[entry]["af_n_pts"]
+                af_sequences = answers[entry]["af_sequences"]
+                longest_sequence = answers[entry]["longest_sequence"]
+
+                outs = np.count_nonzero(self.fit_analyst.anomaly_results[entry]["is_outlier"])
+                n_seqs = len(self.fit_analyst.anomaly_seqs[entry])
+                l_seq = 0
+                for seq in self.fit_analyst.anomaly_seqs[entry]:
+                    if seq["sequence_length"] > l_seq:
+                        l_seq = seq["sequence_length"]
+
+                assert n_anomalous_pts == outs
+                assert af_sequences == n_seqs
+                assert longest_sequence == l_seq
+
+                fpath = os.path.join(self.analyst_path, f"af_results_{entry}.html")
+                output = Path(fpath)
+                assert output.exists() is True
+                assert output.is_file() is True
+
+        assert answers["n_anomalous_points"] == self.fit_analyst.n_anomalous_points
 
     def test_add_anomalous_pts(self):
         """
@@ -630,7 +630,6 @@ class EventAnalystTest:
         answers = self.scenario.get("answers")
         for lc_tag in old_lc_lengths:
             n_returned_pts = new_lc_lengths[lc_tag] - old_lc_lengths[lc_tag]
-            print(f"Lc: {lc_tag}, n_returned_pts: {n_returned_pts}")
             assert n_returned_pts == answers["n_returned_pts"]
 
     @pytest.mark.skip(reason="This test is for debugging code only")
@@ -651,10 +650,10 @@ def test_run():
     Run all tests.
     """
 
-    # for case in [scenario_file_cat, scenario_kwu, scenario_gsa]:
-    #     test = EventAnalystTest(case)
-    #     test.set_up()
-    #     test.test_run_analyst()
+    for case in [scenario_file_cat, scenario_kwu, scenario_gsa]:
+        test = EventAnalystTest(case)
+        test.set_up()
+        test.test_run_analyst()
 
     test = EventAnalystTest(scenario_roman)
     test.set_up()
@@ -663,65 +662,65 @@ def test_run():
     test.test_add_anomalous_pts()
 
     # Remove created files
-    # for case in [scenario_file_cat, scenario_kwu, scenario_gsa, scenario_roman]:
-    #     event_name = case.get("event_name")
-    #     if event_name == "GDR3_ULENS_025":
-    #         analyst_path = case.get("analyst_path")
-    #     else:
-    #         analyst_path = case["config"].get("analyst_path")
-    #
-    #     fpath = os.path.join(analyst_path, "fit_results.json")
-    #     output = Path(fpath)
-    #     if output.exists():
-    #         os.remove(output)
-    #
-    #     fpath = os.path.join(analyst_path, "fit_stats.txt")
-    #     output = Path(fpath)
-    #     if output.exists():
-    #         os.remove(output)
-    #
-    #     fpath = os.path.join(analyst_path, event_name + "_analyst.log")
-    #     output = Path(fpath)
-    #     if output.exists():
-    #         os.remove(output)
-    #
-    #     files_to_remove = [
-    #         "1S1L_no_blend_no_piE.html",
-    #         "1S1L_blend_no_piE.html",
-    #         "1S1L_blend_piE.html",
-    #         "1S1L_blend_piE_p.html",
-    #         "1S1L_blend_piE_n.html",
-    #         "1S1L_no_blend_piE.html",
-    #     ]
-    #     for element in files_to_remove:
-    #         fpath = os.path.join(analyst_path, element)
-    #         output = Path(fpath)
-    #         if output.exists():
-    #             os.remove(output)
-    #
-    #     if event_name == "GDR3_ULENS_025":
-    #         files_to_remove = [
-    #             "GDR3_ULENS_025_1S1L_blend_piE_n_CMD_Gaia_DR3_Gaia_BP.html",
-    #             "GDR3_ULENS_025_1S1L_blend_piE_n_CMD_Gaia_DR3_Gaia_G.html",
-    #             "GDR3_ULENS_025_1S1L_blend_piE_n_CMD_Gaia_DR3_Gaia_RP.html",
-    #         ]
-    #         for element in files_to_remove:
-    #             fpath = os.path.join(analyst_path, element)
-    #             output = Path(fpath)
-    #             if output.exists():
-    #                 os.remove(output)
-    #
-    #     if event_name == "ulwdc1_018":
-    #         fpath1 = os.path.join(analyst_path, "af_results.npz")
-    #         fpath2 = os.path.join(analyst_path, "af_sequences.json")
-    #         for fpath in [fpath1, fpath2]:
-    #             output = Path(fpath)
-    #             if output.exists():
-    #                 os.remove(output)
+    for case in [scenario_file_cat, scenario_kwu, scenario_gsa, scenario_roman]:
+        event_name = case.get("event_name")
+        if event_name == "GDR3_ULENS_025":
+            analyst_path = case.get("analyst_path")
+        else:
+            analyst_path = case["config"].get("analyst_path")
 
-            # for entry in scenario_roman["config"].get("light_curves"):
-            #     lc_tag = f"{entry["survey"]}_{entry["band"]}"
-            #     fpath = os.path.join(analyst_path, f"af_results_{lc_tag}.html")
-            #     output = Path(fpath)
-            #     if output.exists():
-            #         os.remove(output)
+        fpath = os.path.join(analyst_path, "fit_results.json")
+        output = Path(fpath)
+        if output.exists():
+            os.remove(output)
+
+        fpath = os.path.join(analyst_path, "fit_stats.txt")
+        output = Path(fpath)
+        if output.exists():
+            os.remove(output)
+
+        fpath = os.path.join(analyst_path, event_name + "_analyst.log")
+        output = Path(fpath)
+        if output.exists():
+            os.remove(output)
+
+        files_to_remove = [
+            "1S1L_no_blend_no_piE.html",
+            "1S1L_blend_no_piE.html",
+            "1S1L_blend_piE.html",
+            "1S1L_blend_piE_p.html",
+            "1S1L_blend_piE_n.html",
+            "1S1L_no_blend_piE.html",
+        ]
+        for element in files_to_remove:
+            fpath = os.path.join(analyst_path, element)
+            output = Path(fpath)
+            if output.exists():
+                os.remove(output)
+
+        if event_name == "GDR3_ULENS_025":
+            files_to_remove = [
+                "GDR3_ULENS_025_1S1L_blend_piE_n_CMD_Gaia_DR3_Gaia_BP.html",
+                "GDR3_ULENS_025_1S1L_blend_piE_n_CMD_Gaia_DR3_Gaia_G.html",
+                "GDR3_ULENS_025_1S1L_blend_piE_n_CMD_Gaia_DR3_Gaia_RP.html",
+            ]
+            for element in files_to_remove:
+                fpath = os.path.join(analyst_path, element)
+                output = Path(fpath)
+                if output.exists():
+                    os.remove(output)
+
+        if event_name == "ulwdc1_018":
+            fpath1 = os.path.join(analyst_path, "af_results.npz")
+            fpath2 = os.path.join(analyst_path, "af_sequences.json")
+            for fpath in [fpath1, fpath2]:
+                output = Path(fpath)
+                if output.exists():
+                    os.remove(output)
+
+            for entry in scenario_roman["config"].get("light_curves"):
+                lc_tag = f"{entry["survey"]}_{entry["band"]}"
+                fpath = os.path.join(analyst_path, f"af_results_{lc_tag}.html")
+                output = Path(fpath)
+                if output.exists():
+                    os.remove(output)

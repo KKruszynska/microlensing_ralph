@@ -549,7 +549,7 @@ class FitPylima(Fitter):
             default_t0_upper = fit_event.fit_parameters["t0"][1][1]
             fit_event.fit_parameters["t0"][1] = [default_t0_lower, default_t0_upper + delta_t0]
             fit_event.fit_parameters["u0"][1] = [0.0, 2.0]
-            fit_event.fit_parameters["log_tE"][1] = [-1.0, 3.0]
+            fit_event.fit_parameters["log_tE"][1] = [-1.0, 3.5]
             fit_event.fit_parameters["log_rho"][1] = [-5.0, 1.0]
             fit_event.fit_parameters["log_separation"][1] = [-4.0, 2.0]
             fit_event.fit_parameters["log_mass_ratio"][1] = [-5.0, 1.0]
@@ -580,6 +580,7 @@ class FitPylima(Fitter):
                 f"Fit Analyst -- pyLIMA: Final boundaries for {key} = {fit_event.fit_parameters[key][1]}."
             )
         self.log.info(f"Fit Analyst -- pyLIMA: Adding starting parameters:")
+
         start_guess = []
         for key in fit_event.fit_parameters:
             if key in starting_params:
@@ -587,6 +588,7 @@ class FitPylima(Fitter):
                     f"Fit Analyst -- pyLIMA: Adding starting parameters: {key} = {starting_params[key]}"
                 )
                 start_guess.append(starting_params[key])
+
         fit_event.model_parameters_guess = start_guess
 
         self.log.info("Fit Analyst -- pyLIMA: Starting fit.")
@@ -937,7 +939,7 @@ class FitPylima(Fitter):
                         event_parameters.append(model_parameters[par])
                         event_keys.append(par)
 
-        if model_tag == "PSPL":
+        if model_tag == "1S1L":
             if "piEN" in event_keys:
                 model = PSPL_model.PSPLmodel(
                     event, parallax=["Full", int(model_parameters["t0_par"])],

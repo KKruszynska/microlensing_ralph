@@ -151,9 +151,6 @@ class FitAnalyst(BaseAnalyst):
             "return_all_models", True
         )
 
-        print("====================================")
-        print(config["fit_analyst"])
-        print("====================================")
         self.config["anomaly_finder"] = config["fit_analyst"].get("anomaly_finder", None)
 
         params = {}
@@ -866,28 +863,38 @@ class FitAnalyst(BaseAnalyst):
 
         self.log.info("Fit Analyst: Starting finished event fit -- single source, binary lens.")
 
-        self.log.info("Fit Analyst: Finding 2S1L starting parameters.")
+        self.log.info("Fit Analyst: Finding 1S2L starting parameters.")
+
         starting_params = {
             "ra": self.config["ra"],
             "dec": self.config["dec"],
-            "t0": self.best_results[self.best_model].get("t_0"),
-            "u0": self.best_results[self.best_model].get("u0"),
-            "tE": self.best_results[self.best_model].get("tE"),
+            "t0": self.best_results["1S1L_blend_no_piE"].get("t0"),
+            "u0": self.best_results["1S1L_blend_no_piE"].get("u0"),
+            "log_tE": np.log10(self.best_results["1S1L_blend_no_piE"].get("tE")),
+            "log_rho": 1.0,
+            "log_separation": 1.0,
+            "log_mass_ratio": 1.0,
+            "alpha" : 0.0,
         }
 
-        self.log.info("Fit Analyst: Performing 2S1L with blend fit.")
+        self.log.info("Fit Analyst: Performing 1S2L with blend fit.")
+
         results = self.fit_event(
-            "2S1L_blend_no_piE",
-            os.path.join(self.analyst_path, "2S1L_blend_no_piE"),
+            "1S2L_blend_no_piE",
+            os.path.join(self.analyst_path, "1S2L_blend_no_piE"),
             starting_params,
             False,
             True,
         )
-        self.best_results["2S1L_blend_no_piE"] = results
-        self.log.info("Fit Analyst: Finished fitting 2S1L with blend fit.")
+        self.best_results["1S2L_blend_no_piE"] = results
+        self.log.info("Fit Analyst: Finished fitting 1S2L with blend fit.")
 
-        # self.log.info("Fit Analyst: Performing 2S1L+piE fit.")
+        # self.log.info("Fit Analyst: Performing 1S2L+piE fit.")
         #
+        # fit_label = "1S2L_blend_piE"
+        # parallax = True
+        # starting_params["piEN"] = self.best_results[self.best_model].get("piEN")
+        # starting_params["piEE"] = self.best_results[self.best_model].get("piEE")
         # starting_params = {
         #     "ra": self.config["ra"],
         #     "dec": self.config["dec"],

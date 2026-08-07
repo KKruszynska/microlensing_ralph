@@ -359,3 +359,109 @@ def vet_outliers(light_curve, is_outlier, log):
 
     log.debug(f"Vet outliers: Found {total_points} in total, among {n_seqs} sequences.")
     return groups
+
+def get_anomaly_information(anomaly_seqs, residuals):
+    """
+    Get information necessary about the anomaly to calculate starting parameters.
+
+    :param anomaly_seqs: A dictionary with list sequences of candidate anomalous points for each filter.
+    :type anomaly_seqs: dict
+
+    :param residuals: A dictionary with JD, residuals and errors for each filter.
+    :type residuals: dict
+
+    :return: A dictionary with information about the anomaly, containing following keywords:
+        * `t_anomaly`
+        * `duration_anomaly`
+        * `ampl_anomaly`
+    """
+
+    t_start = np.inf
+    t_end = 0.
+    for band in anomaly_seqs:
+        for seq in anomaly_seqs[band]:
+            if t_start > seq["t_start"]:
+                t_start = seq["t_start"]
+            if t_end < seq["t_end"]:
+                t_end = seq["t_end"]
+
+    amplitude = 0.0
+    t_anomaly = np.nan
+    for band in residuals:
+        lc = residuals[band]
+        anomalous_idx = np.intersect1d(np.where(lc[:, 0] > t_start), np.where(lc[:, 0] < t_end))
+        anomalous_res = lc[anomalous_idx, :]
+
+        max_idx = np.argmax(np.abs(anomalous_res[:,1]))
+        ampl = 0 - anomalous_res[max_idx, 1]
+
+        if np.abs(ampl) > np.abs(amplitude):
+            amplitude = ampl
+            t_anomaly = anomalous_res[max_idx, 0]
+
+        result = {
+            "t_anomaly": t_anomaly,
+            "duration_anomaly": t_end - t_start,
+            "ampl_anomaly": amplitude,
+        }
+
+    return result
+
+
+
+def get_binary_starting_params(t0, u0, tE, t_anomaly, duration_anomaly, ampl_anomaly):
+    """
+    Get starting parameters for binary lens fitting.
+
+    :param t0: Time of peak of the 1S1L model without second-order effects.
+    :type t0: float
+
+    :param u0: Impact parameter of the 1S1L model without second-order effects.
+    :type u0: float
+
+    :param tE: Einstein timescale of the 1S1L model without second-order effects.
+    :type tE: float
+
+    :param t_anomaly: Time of peak of the anomaly.
+    :type t_anomaly: float
+
+    :param duration_anomaly: How long anomaly lasts, in days.
+    :type duration_anomaly: float
+
+    :param ampl_anomaly: Amplitude of the anomaly.
+    :type ampl_anomaly: float
+
+    :return: A dictionary with the following keys:
+        * `log_rho` -- log10 of source angular radius in Einstein radii;
+        * `log_mass_ratio` -- log10 of mass ratio;
+        * `log_separation` -- log10 of components separation in Einstein radii;
+        * `alpha` -- angle between
+    """
+
+    # Rho
+    rho = duration_anomaly / tE
+
+    # Mass ratio
+    mass_ratio = np.abs(ampl_anomaly) * rho**2 / 2.0
+
+    # Separation
+    tau = np.abs((t_anomaly - t0) / tE)
+    u = np.sqrt(tau**2 + u0**2)
+    y_plus = 0.5 * np.sqrt(u**2 + 4.0) + u
+    y_minus = 0.5 * np.sqrt(u**2 + 4.0) - u
+
+    if ampl_anomaly > 0:
+        separation = y_plus
+    else:
+        separation = y_minus
+
+    #Alpha
+    alpha = np.atan(u0 / tau)
+
+    result = {
+        "log_rho": np.log10(rho),
+        "log_mass_ratio": np.log10(mass_ratio),
+        "log_separation": np.log10(separation),
+        "alpha": alpha
+    }
+    return result

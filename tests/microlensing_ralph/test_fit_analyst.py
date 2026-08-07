@@ -232,9 +232,19 @@ scenario_roman = {
             "1S2L_blend_no_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "TRF",
+                "fitting_method_args": {
+                    "loss_function" : "chi2",
+                },
                 "boundaries": {
                     "u0": [0.0, 2.5],
                 }
+            },
+            "1S2L_blend_piE": {
+                "fitting_package": "pyLIMA",
+                "fitting_method": "TRF",
+                "fitting_method_args": {
+                    "loss_function": "chi2",
+                },
             },
         },
     },

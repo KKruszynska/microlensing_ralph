@@ -553,7 +553,7 @@ class FitPylima(Fitter):
             fit_event.fit_parameters["log_rho"][1] = [-5.0, 1.0]
             fit_event.fit_parameters["log_separation"][1] = [-4.0, 2.0]
             fit_event.fit_parameters["log_mass_ratio"][1] = [-5.0, 1.0]
-            fit_event.fit_parameters['alpha'][1] = [0.0, 2*np.pi]
+            fit_event.fit_parameters["alpha"][1] = [0.0, 2*np.pi]
             if parallax:
                 fit_event.fit_parameters["piEN"][1] = [-2.0, 2.0]
                 fit_event.fit_parameters["piEE"][1] = [-2.0, 2.0]

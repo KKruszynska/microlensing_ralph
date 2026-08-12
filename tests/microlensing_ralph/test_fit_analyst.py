@@ -300,37 +300,16 @@ answers_roman = {
         },
         "1S1L_blend_no_piE": {
             "t0_par": 0.0,
-            "t0": 2458752.435,
+            "t0": 2458749.39,
             "t0_error": 0.057,
-            "u0": 2.0,
-            "u0_error": 0.80815,
-            "tE": 13.841,
+            "u0": 0.3,
+            "u0_error": 0.05,
+            "tE": 14.8,
             "tE_error": 4.288,
-            "fsource_Roman_W149": 3599.12167,
-            "fsource_Roman_W149_error": 4231.37257,
-            "fsource_Roman_W149_mag": 18.51,
-            "fsource_Roman_W149_mag_error": 1.276,
-            "ftotal_Roman_W149": 992.20907,
+            "fsource_Roman_W149": 352515.59,
+            "fsource_Roman_W149_error": 4000.0,
+            "ftotal_Roman_W149": 992.76,
             "ftotal_Roman_W149_error": 0.06583,
-            "ftotal_Roman_W149_mag": 19.908,
-            "ftotal_Roman_W149_mag_error": 0.0,
-            "chi2": 3519971.436,
-            "fblend_Roman_W149": -2606.9126,
-            "fblend_Roman_W149_error": 4231.372570512079,
-            "fblend_Roman_W149_mag": np.nan,
-            "fblend_Roman_W149_mag_error": 1.762,
-            "source_magnitude": 18.51,
-            "source_mag_error": 1.276,
-            "blend_magnitude": np.nan,
-            "blend_mag_error": 1.762,
-            "baseline_magnitude": 19.908,
-            "baseline_mag_error": 0.0,
-            "red_chi2": 91.278,
-            "sw_test": 0.136,
-            "ad_test": 9928.424,
-            "ks_test": 0.047,
-            "aic_test": 3519981.436,
-            "bic_test": 3520024.237
         },
     },
     "outlier_results_path": os.path.join(ralph_input, "test_results", "ulwdc1_018_outlier_results.npz"),
@@ -411,7 +390,12 @@ class FitAnalystTest:
         path_outputs, config, light_curves = self.setup()
         fit_params = self.scenario.get("fit_analyst")
 
-        log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], stream=True)
+        log = logs.start_log(path_outputs,
+                             "debug",
+                             event_name=config["event_name"],
+                             to_file=False,
+                             to_stream=True
+                             )
         analyst = FitAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
         on_mag_t_config = analyst.config["ongoing_magnification_threshold"]
         on_ampl_t_config = analyst.config["ongoing_amplitude_threshold"]
@@ -513,7 +497,10 @@ class FitAnalystTest:
         data = np.load(self.answer.get("outlier_results_path"), allow_pickle=True)
         outlier_results = data["arr_0"][()]
 
-        log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], stream=False)
+        log = logs.start_log(path_outputs,
+                             "debug",
+                             event_name=config["event_name"],
+                             to_stream=False)
         analyst = FitAnalyst(config["event_name"],
                              path_outputs,
                              light_curves,

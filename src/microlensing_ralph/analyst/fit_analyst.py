@@ -202,6 +202,16 @@ class FitAnalyst(BaseAnalyst):
 
         self.start_time = time.time()
         results = {}
+        model_type = "1S2L" if "1S2L" in fit_label else "1S1L"
+        
+        # if "1S1L" in fit_label:
+        #     model_type = "1S1L"
+        # elif "2S1L" in fit_label:
+        #     model_type = "2S1L"
+
+        print("========================================")
+        print("fit_label", fit_label)
+        print (model_type)
 
         fit_config = self.config["model_fit_configuration"].get(fit_label, None)
         if fit_config is not None:
@@ -223,118 +233,52 @@ class FitAnalyst(BaseAnalyst):
                     self.log.debug(f"{key}: {boundaries[key]}\n")
 
             fitting_args = fit_config.get("fitting_method_args", None)
-
+            
             if fitting_package.lower() == "pylima":
                 if fitting_args is not None:
                     fit_event = pylima.fit_pylima.FitPylima(self.log)
-                    if "1S1L" in fit_label:
-                        results = fit_event.fit_1S1L(
-                            fit_name,
-                            self.light_curves,
-                            starting_params,
-                            parallax,
-                            blend,
-                            return_norm_lc=return_norm_lc,
-                            fitting_method=fitting_method,
-                            use_boundaries=boundaries,
-                            **fitting_args
-                        )
-                    # elif "2S1L" in fit_label:
-                    #     results = fit_event.fit_2S1L(
-                    #         fit_name,
-                    #         self.light_curves,
-                    #         starting_params,
-                    #         parallax,
-                    #         blend,
-                    #         return_norm_lc=return_norm_lc,
-                    #         fitting_method=fitting_method,
-                    #         use_boundaries=boundaries,
-                    #         **fitting_args
-                    #     )
-                    elif "1S2L" in fit_label:
-                        results = fit_event.fit_1S2L(
-                            fit_name,
-                            self.light_curves,
-                            starting_params,
-                            parallax,
-                            blend,
-                            return_norm_lc=return_norm_lc,
-                            fitting_method=fitting_method,
-                            use_boundaries=boundaries,
-                            **fitting_args
-                        )
+                    results = fit_event.fit_model(
+                        fit_name,
+                        self.light_curves,
+                        starting_params,
+                        parallax,
+                        blend,
+                        model_type=model_type,
+                        return_norm_lc=return_norm_lc,
+                        fitting_method=fitting_method,
+                        use_boundaries=boundaries,
+                        **fitting_args
+                    )
                 else:
                     fit_event = pylima.fit_pylima.FitPylima(self.log)
-                    if "1S1L" in fit_label:
-                        results = fit_event.fit_1S1L(
-                            fit_name,
-                            self.light_curves,
-                            starting_params,
-                            parallax,
-                            blend,
-                            return_norm_lc=return_norm_lc,
-                            fitting_method=fitting_method,
-                            use_boundaries=boundaries,
-                        )
-                    # elif "2S1L" in fit_label:
-                    #     results = fit_event.fit_2S1L(
-                    #         fit_name,
-                    #         self.light_curves,
-                    #         starting_params,
-                    #         parallax,
-                    #         blend,
-                    #         return_norm_lc=return_norm_lc,
-                    #         fitting_method=fitting_method,
-                    #         use_boundaries=boundaries,
-                    #     )
-                    elif "1S2L" in fit_label:
-                        results = fit_event.fit_1S2L(
-                            fit_name,
-                            self.light_curves,
-                            starting_params,
-                            parallax,
-                            blend,
-                            return_norm_lc=return_norm_lc,
-                            fitting_method=fitting_method,
-                            use_boundaries=boundaries,
-                        )
+                    results = fit_event.fit_model(
+                        fit_name,
+                        self.light_curves,
+                        starting_params,
+                        parallax,
+                        blend,
+                        model_type=model_type,
+                        return_norm_lc=return_norm_lc,
+                        fitting_method=fitting_method,
+                        use_boundaries=boundaries,
+                    )
         else:
             self.log.info("Fit Analyst: Using default fitting setup.")
             self.log.debug("Fit Analyst: Set up: fitting package: pyLIMA, "
                            "fitting method: TRF."
                            )
-            fit_event = pylima.fit_pylima.FitPylima(self.log)
-            if "1S1L" in fit_label:
-                results = fit_event.fit_1S1L(
-                    fit_name,
-                    self.light_curves,
-                    starting_params,
-                    parallax,
-                    blend,
-                    return_norm_lc=return_norm_lc,
-                    use_boundaries=use_boundaries,
-                )
-            # elif "2S1L" in fit_label:
-            #     results = fit_event.fit_2S1L(
-            #         fit_name,
-            #         self.light_curves,
-            #         starting_params,
-            #         parallax,
-            #         blend,
-            #         return_norm_lc=return_norm_lc,
-            #         use_boundaries=use_boundaries,
-            #     )
-            elif "1S2L" in fit_label:
-                results = fit_event.fit_1S2L(
-                    fit_name,
-                    self.light_curves,
-                    starting_params,
-                    parallax,
-                    blend,
-                    return_norm_lc=return_norm_lc,
-                    use_boundaries=use_boundaries,
-                )
 
+            fit_event = pylima.fit_pylima.FitPylima(self.log)
+            results = fit_event.fit_model(
+                fit_name,
+                self.light_curves,
+                starting_params,
+                parallax,
+                blend,
+                model_type=model_type,
+                return_norm_lc=return_norm_lc,
+                use_boundaries=use_boundaries,
+            )
         self.log.debug(f"Fit Analyst: Time elapsed for fitting: {time.time() - self.start_time:.2f} s")
 
         return results
@@ -637,7 +581,7 @@ class FitAnalyst(BaseAnalyst):
         if min_sequence_length is not None:
             # check if there is a sufficiently long sequence of outliers
             for entry in self.light_curves:
-                tag = f"{entry["survey"]}_{entry["band"]}"
+                tag = f"{entry['survey']}_{entry['band']}"
                 lc_candidate_anomalies = []
                 lc_outlier_seq = self.outlier_seqs[tag]
                 lc_anomaly_seq = self.anomaly_seqs[tag]
@@ -756,7 +700,7 @@ class FitAnalyst(BaseAnalyst):
         if self.outlier_results is not None:
             self.log.debug(f"Fit Analyst: Adding outliers identified during an anomaly.")
             for entry in self.light_curves:
-                lc_tag = f"{entry["survey"]}_{entry["band"]}"
+                lc_tag = f"{entry['survey']}_{entry['band']}"
                 lc = entry["light_curve_with_outliers"]
                 is_outlier = self.outlier_results[lc_tag]["is_outlier"]
                 old_lc_len = len(entry["light_curve"])
@@ -997,7 +941,7 @@ class FitAnalyst(BaseAnalyst):
             self.log.debug(f"Fit Analyst: Masking outliers before initial fits.")
             for entry in self.light_curves:
                 # extract np array with the light curve
-                lc_tag = f"{entry["survey"]}_{entry["band"]}"
+                lc_tag = f"{entry['survey']}_{entry['band']}"
                 lc = np.array(entry["light_curve"])
                 if lc_tag in self.outlier_results:
                     outlier_flags =  self.outlier_results[lc_tag]["is_outlier"]

@@ -37,9 +37,13 @@ class EventAnalyst(BaseAnalyst):
     :param config_path: The path to the configuration file of the Event Analyst.
     :type config_path: str, optional
 
-    :param stream: Flag whether the logging.Logger instance should be available as a stream,
-        to be accessible through, for example, Kubernetes.
-    :type stream: bool, optional
+    :param log_to_file: Flag whether the logging.Logger instance should be saved
+        to a file. Default `True`.
+    :type log_to_file: bool, optional
+
+    :param log_to_stream: Flag whether the logging.Logger instance should be available as a stream,
+        to be accessible through, for example, Kubernetes. Default `False`.
+    :type log_to_stream: bool, optional
 
      Notes on configuration:
     ------------------------------
@@ -80,7 +84,8 @@ class EventAnalyst(BaseAnalyst):
         log_level,
         config_dict=None,
         config_path=None,
-        stream=False,
+        log_to_file=True,
+        log_to_stream=False,
     ):
 
         super().__init__(event_name, analyst_path, config_dict=config_dict, config_path=config_path)
@@ -89,7 +94,12 @@ class EventAnalyst(BaseAnalyst):
         self.outlier_seqs = None
 
         # start
-        self.log = logs.start_log(self.analyst_path, log_level, event_name=self.event_name, stream=stream)
+        self.log = logs.start_log(self.analyst_path,
+                                  log_level,
+                                  event_name=self.event_name,
+                                  to_file=log_to_file,
+                                  to_stream=log_to_stream
+                                  )
         self.log.info("-------------------------------------------")
         self.log.info(f"Event Analyst: Analyzing event {event_name:s}")
         self.log.info("-------------------------------------------")

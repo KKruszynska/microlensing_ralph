@@ -9,6 +9,7 @@ from pyLIMA.simulations import simulator
 from microlensing_ralph.fitting_support.fitter import Fitter
 from microlensing_ralph.fitting_support.pylima import plots_pylima
 
+from microlensing_ralph.toolbox.logs import capture_prints
 
 class FitPylima(Fitter):
     """
@@ -45,72 +46,77 @@ class FitPylima(Fitter):
         :rtype: pyLIMA.event.Event
         """
 
-        event_to_fit = event.Event(ra=ra, dec=dec)
-        event_to_fit.name = event_name
+        with capture_prints(self.log, capture_stderr=True):
+            event_to_fit = event.Event(ra=ra, dec=dec)
+            event_to_fit.name = event_name
 
-        t_min, t_max = 10e9, 0.0
-        survey_to_align = ""
-        max_n_points = 0
-        for entry in light_curves:
+            t_min, t_max = 10e9, 0.0
+            survey_to_align = ""
+            max_n_points = 0
+            for entry in light_curves:
 
-            lc = np.array(entry["light_curve"])
-            survey = entry["survey"]
-            band = entry["band"]
-            if ((t_min > np.min(lc[:, 0])) and (t_max < np.max(lc[:, 0])) and
-                    (max_n_points < len(lc[:, 0]))):
-                survey_to_align = survey
-                max_n_points = len(lc[:, 0])
-                t_min, t_max = np.min(lc[:, 0]), np.max(lc[:, 0])
+                lc = np.array(entry["light_curve"])
+                survey = entry["survey"]
+                band = entry["band"]
+                if ((t_min > np.min(lc[:, 0])) and (t_max < np.max(lc[:, 0])) and
+                        (max_n_points < len(lc[:, 0]))):
+                    survey_to_align = survey
+                    max_n_points = len(lc[:, 0])
+                    t_min, t_max = np.min(lc[:, 0]), np.max(lc[:, 0])
 
-            if "ephemeris" in entry and entry["ephemeris"] is not None:
-                self.log.debug("Fit Analyst -- pyLIMA: Loading provided ephemeris.")
-                ephemeris = entry["ephemeris"]
+                if "ephemeris" in entry and entry["ephemeris"] is not None:
+                    self.log.debug("Fit Analyst -- pyLIMA: Loading provided ephemeris.")
+                    ephemeris = entry["ephemeris"]
 
-                spacecraft_positions = {"photometry": ephemeris}
+                    spacecraft_positions = {"photometry": ephemeris}
 
-                telescope = telescopes.Telescope(
-                    name=survey + "_" + band,
-                    camera_filter=band,
-                    lightcurve=lc.astype(float),
-                    lightcurve_names=["time", "mag", "err_mag"],
-                    lightcurve_units=["JD", "mag", "mag"],
-                    location="Space",
-                    spacecraft_name=survey,
-                    spacecraft_positions=spacecraft_positions,
-                )
+                    telescope = telescopes.Telescope(
+                        name=survey + "_" + band,
+                        camera_filter=band,
+                        lightcurve=lc.astype(float),
+                        lightcurve_names=["time", "mag", "err_mag"],
+                        lightcurve_units=["JD", "mag", "mag"],
+                        location="Space",
+                        spacecraft_name=survey,
+                        spacecraft_positions=spacecraft_positions,
+                    )
 
-            else:
-                telescope = telescopes.Telescope(
-                    name=survey + "_" + band,
-                    camera_filter=band,
-                    lightcurve=lc.astype(float),
-                    lightcurve_names=["time", "mag", "err_mag"],
-                    lightcurve_units=["JD", "mag", "mag"],
-                    location="Earth",
-                )
+                else:
+                    telescope = telescopes.Telescope(
+                        name=survey + "_" + band,
+                        camera_filter=band,
+                        lightcurve=lc.astype(float),
+                        lightcurve_names=["time", "mag", "err_mag"],
+                        lightcurve_units=["JD", "mag", "mag"],
+                        location="Earth",
+                    )
 
-            event_to_fit.telescopes.append(telescope)
+                event_to_fit.telescopes.append(telescope)
 
-        self.log.debug(f"Fit Analyst -- pyLIMA: Survey to align data to: {survey_to_align:s}")
-        event_to_fit.find_survey(survey_to_align)
-        event_to_fit.check_event()
+            self.log.debug(f"Fit Analyst -- pyLIMA: Survey to align data to: {survey_to_align:s}")
+            event_to_fit.find_survey(survey_to_align)
+            event_to_fit.check_event()
 
         return event_to_fit
 
-    def fit_1S1L(
+    def fit_model(
         self,
         fit_name,
         light_curves,
         starting_params,
         parallax,
         blend,
+        model_type="1S1L",
         return_norm_lc=False,
         use_boundaries=None,
         fitting_method=None,
-        **kwargs
+        **kwargs,
     ):
         """
-        Perform a point source-point lens model fit.
+        Simplified with the help of Claude.ai.
+
+        Perform a single or binary source, and single or binary lens model fit with
+        `pyLIMA` package. Note: binary source-binary lens model is not supported.
 
         :param fit_name: A label, but in fact a path to which the plot with
             the best-fitting model will be saved.
@@ -132,335 +138,9 @@ class FitPylima(Fitter):
             will assume that all light is coming from the source.
         :type blend: bool
 
-        :param return_norm_lc: If `True`, this method will return a light curve and residuals
-            aligned to the best-fitting model it found.
-        :type return_norm_lc: bool, optional
-
-        :param use_boundaries: A dictionary containing upper and lower limits for specific
-            model parameters, defined by the User.
-        :type use_boundaries: dict, optional
-
-        :param fitting_method: A label of the type of fitting method used in pyLIMA;
-            Available options: TRF, DE.
-        :type fitting_method: str, optional
-
-        :param kwargs: Optional keyword arguments holding information about fitting method set up
-        :type kwargs: dict, optional
-
-        :return: A dictionary with the parameters of the best-fitting model, and, if available,
-            a list with a light curve aligned to it and its residuals.
-        :rtype: list
-        """
-
-        # Setup event
-        event_name = fit_name
-        ra, dec = float(starting_params["ra"]), float(starting_params["dec"])
-        event = self.setup_event(event_name, ra, dec, light_curves)
-
-        blend_param = "ftotal" if blend else "noblend"
-
-        if parallax:
-            self.log.info("Fit Analyst -- pyLIMA: Fitting with microlensing parallax.")
-            pspl = PSPL_model.PSPLmodel(
-                event, parallax=["Full", int(starting_params["t0"])], blend_flux_parameter=blend_param
-            )
-        else:
-            self.log.info("Fit Analyst -- pyLIMA: Fitting without microlensing parallax.")
-            pspl = PSPL_model.PSPLmodel(event, parallax=["None", 0.0], blend_flux_parameter=blend_param)
-
-        DE_population, loss_function = None, None
-        for key, value in kwargs.items():
-            if key == "DE_population":
-                DE_population = int(value)
-            if key == "loss_function":
-                loss_function = value
-
-        if fitting_method is not None:
-            self.log.info(f"Fit Analyst -- pyLIMA: Fitting method: {fitting_method}.")
-            if loss_function is None:
-                loss_function = "soft_l1"
-            if fitting_method == "DE":
-                if DE_population is None:
-                    DE_population = 10
-                self.log.debug(
-                    f"Fit Analyst -- pyLIMA: Fitting method set up: DE_pop={DE_population}."
-                )
-                self.log.debug(
-                    f"Fit Analyst -- pyLIMA: Fitting method set up: loss_fun={loss_function}."
-                )
-                fit_event = DE_fit.DEfit(pspl,
-                                         DE_population_size=DE_population,
-                                         loss_function=loss_function
-                                         )
-            elif fitting_method == "TRF":
-                self.log.debug(
-                    f"Fit Analyst -- pyLIMA: Fitting method set up: loss_fun={loss_function}."
-                )
-                fit_event = TRF_fit.TRFfit(pspl, loss_function=loss_function)
-        else:
-            self.log.info("Fit Analyst -- pyLIMA: Using default fitting method (TRF).")
-            fit_event = TRF_fit.TRFfit(pspl, loss_function="soft_l1")
-
-        # Use boundries like in mop.toolbox.fittools
-        if use_boundaries is None:
-            self.log.info("Fit Analyst -- pyLIMA: Using boundaries default for microlensing_ralph.")
-            delta_t0 = 50.0
-            default_t0_lower = fit_event.fit_parameters["t0"][1][0]
-            default_t0_upper = fit_event.fit_parameters["t0"][1][1]
-            fit_event.fit_parameters["t0"][1] = [default_t0_lower, default_t0_upper + delta_t0]
-            fit_event.fit_parameters["tE"][1] = [0.0, 1000.0]
-            fit_event.fit_parameters["u0"][1] = [0.0, 2.0]
-            if parallax:
-                fit_event.fit_parameters["piEN"][1] = [-2.0, 2.0]
-                fit_event.fit_parameters["piEE"][1] = [-2.0, 2.0]
-        else:
-            self.log.info("Fit Analyst -- pyLIMA: Using boundaries passed by the User.")
-            if "t0" not in use_boundaries:
-                delta_t0 = 50.0
-                default_t0_lower = fit_event.fit_parameters["t0"][1][0]
-                default_t0_upper = fit_event.fit_parameters["t0"][1][1]
-                fit_event.fit_parameters["t0"][1] = [default_t0_lower, default_t0_upper + delta_t0]
-            for key in use_boundaries:
-                self.log.debug(
-                    f"Fit Analyst -- pyLIMA: Boundaries for {key} = {use_boundaries[key]}."
-                )
-                fit_event.fit_parameters[key][1] = [use_boundaries[key][0], use_boundaries[key][1]]
-            if "t0" not in use_boundaries:
-                delta_t0 = 50.0
-                default_t0_lower = fit_event.fit_parameters["t0"][1][0]
-                default_t0_upper = fit_event.fit_parameters["t0"][1][1]
-                fit_event.fit_parameters["t0"][1] = [default_t0_lower, default_t0_upper + delta_t0]
-
-        for key in fit_event.fit_parameters:
-            self.log.debug(
-                f"Fit Analyst -- pyLIMA: Final boundaries for {key} = {fit_event.fit_parameters[key][1]}."
-            )
-        self.log.info(f"Fit Analyst -- pyLIMA: Adding starting parameters:")
-        start_guess = []
-        for key in fit_event.fit_parameters:
-            if key in starting_params:
-                self.log.info(
-                    f"Fit Analyst -- pyLIMA: Adding starting parameters: {key} = {starting_params[key]}"
-                )
-                start_guess.append(starting_params[key])
-        fit_event.model_parameters_guess = start_guess
-
-        self.log.info("Fit Analyst -- pyLIMA: Starting fit.")
-        fit_event.fit()
-        self.log.info("Fit Analyst -- pyLIMA: Fitting finished")
-
-        # This will have to be modified to be compatible with MOP
-        self.log.debug("Fit Analyst -- pyLIMA: Convert model parameters to dictionary.")
-        model_parameters = self.gather_parameters(event, fit_event, fitting_method=fitting_method)
-
-        # Produce fit outputs here
-        plots_pylima.plot_pylima(event, fit_event, self.log)
-
-        if return_norm_lc:
-            norm_lc, residuals = self.get_aligned_data(pspl, fit_event.fit_results["best_model"])
-            return model_parameters, norm_lc, residuals
-
-        return model_parameters
-
-    # def fit_2S1L(
-    #     self,
-    #     fit_name,
-    #     light_curves,
-    #     starting_params,
-    #     parallax,
-    #     blend,
-    #     return_norm_lc=False,
-    #     use_boundaries=None,
-    #     fitting_method=None,
-    #     **kwargs
-    # ):
-    #     """
-    #     Perform a binary source-point lens model fit.
-    #
-    #     :param fit_name: A label, but in fact a path to which the plot with
-    #         the best-fitting model will be saved.
-    #     :type fit_name: str
-    #
-    #     :param light_curves: A list of dictionaries with event name, light curve, survey name,
-    #         filter name, and, if available, an ephemeris of the space observatory which was
-    #         used to obtain the observations.
-    #     :type light_curves: list
-    #
-    #     :param starting_params: A dictionary containing starting parameters.
-    #     :type starting_params: dict
-    #
-    #     :param parallax: If `True` microlensing parallax effect will be included in the model,
-    #         if `False` it will not.
-    #     :type parallax: bool
-    #
-    #     :param blend: If `True` blending will be fitted for this event, if `False`, the model
-    #         will assume that all light is coming from the source.
-    #     :type blend: bool
-    #
-    #     :param return_norm_lc: If `True`, this method will return a light curve and residuals
-    #         aligned to the best-fitting model it found.
-    #     :type return_norm_lc: bool, optional
-    #
-    #     :param use_boundaries: A dictionary containing upper and lower limits for specific
-    #         model parameters, defined by the User.
-    #     :type use_boundaries: dict, optional
-    #
-    #     :param fitting_method: A label of the type of fitting method used in pyLIMA;
-    #         Available options: TRF, DE.
-    #     :type fitting_method: str, optional
-    #
-    #     :param kwargs: Optional keyword arguments holding information about fitting method set up
-    #     :type kwargs: dict, optional
-    #
-    #     :return: A dictionary with the parameters of the best-fitting model, and, if available,
-    #         a list with a light curve aligned to it and its residuals.
-    #     :rtype: list
-    #     """
-    #
-    #     # Setup event
-    #     event_name = fit_name
-    #     ra, dec = float(starting_params["ra"]), float(starting_params["dec"])
-    #     event = self.setup_event(event_name, ra, dec, light_curves)
-    #
-    #     blend_param = "ftotal" if blend else "noblend"
-    #
-    #     if parallax:
-    #         self.log.info("Fit Analyst -- pyLIMA: Fitting with microlensing parallax.")
-    #         bspl = PSPL_model.PSPLmodel(
-    #             event, parallax=["Full", int(starting_params["t0"])], blend_flux_parameter=blend_param
-    #         )
-    #     else:
-    #         self.log.info("Fit Analyst -- pyLIMA: Fitting without microlensing parallax.")
-    #         pspl = PSPL_model.PSPLmodel(event, parallax=["None", 0.0], blend_flux_parameter=blend_param)
-    #
-    #     DE_population, loss_function = None, None
-    #     for key, value in kwargs.items():
-    #         if key == "DE_population":
-    #             DE_population = int(value)
-    #         if key == "loss_function":
-    #             loss_function = value
-    #
-    #     if fitting_method is not None:
-    #         self.log.info(f"Fit Analyst -- pyLIMA: Fitting method: {fitting_method}.")
-    #         if loss_function is None:
-    #             loss_function = "soft_l1"
-    #         if fitting_method == "DE":
-    #             if DE_population is None:
-    #                 DE_population = 10
-    #             self.log.debug(
-    #                 f"Fit Analyst -- pyLIMA: Fitting method set up: DE_pop={DE_population}."
-    #             )
-    #             self.log.debug(
-    #                 f"Fit Analyst -- pyLIMA: Fitting method set up: loss_fun={loss_function}."
-    #             )
-    #             fit_event = DE_fit.DEfit(pspl,
-    #                                      DE_population_size=DE_population,
-    #                                      loss_function=loss_function
-    #                                      )
-    #         elif fitting_method == "TRF":
-    #             self.log.debug(
-    #                 f"Fit Analyst -- pyLIMA: Fitting method set up: loss_fun={loss_function}."
-    #             )
-    #             fit_event = TRF_fit.TRFfit(pspl, loss_function=loss_function)
-    #     else:
-    #         self.log.info("Fit Analyst -- pyLIMA: Using default fitting method (TRF).")
-    #         fit_event = TRF_fit.TRFfit(pspl, loss_function="soft_l1")
-    #
-    #     # Use boundries like in mop.toolbox.fittools
-    #     if use_boundaries is None:
-    #         self.log.info("Fit Analyst -- pyLIMA: Using boundaries default for microlensing_ralph.")
-    #         delta_t0 = 50.0
-    #         default_t0_lower = fit_event.fit_parameters["t0"][1][0]
-    #         default_t0_upper = fit_event.fit_parameters["t0"][1][1]
-    #         fit_event.fit_parameters["t0"][1] = [default_t0_lower, default_t0_upper + delta_t0]
-    #         fit_event.fit_parameters["tE"][1] = [0.0, 1000.0]
-    #         fit_event.fit_parameters["u0"][1] = [0.0, 2.0]
-    #         if parallax:
-    #             fit_event.fit_parameters["piEN"][1] = [-2.0, 2.0]
-    #             fit_event.fit_parameters["piEE"][1] = [-2.0, 2.0]
-    #     else:
-    #         self.log.info("Fit Analyst -- pyLIMA: Using boundaries passed by the User.")
-    #         if "t0" not in use_boundaries:
-    #             delta_t0 = 50.0
-    #             default_t0_lower = fit_event.fit_parameters["t0"][1][0]
-    #             default_t0_upper = fit_event.fit_parameters["t0"][1][1]
-    #             fit_event.fit_parameters["t0"][1] = [default_t0_lower, default_t0_upper + delta_t0]
-    #         for key in use_boundaries:
-    #             self.log.debug(
-    #                 f"Fit Analyst -- pyLIMA: Boundaries for {key} = {use_boundaries[key]}."
-    #             )
-    #             fit_event.fit_parameters[key][1] = [use_boundaries[key][0], use_boundaries[key][1]]
-    #         if "t0" not in use_boundaries:
-    #             delta_t0 = 50.0
-    #             default_t0_lower = fit_event.fit_parameters["t0"][1][0]
-    #             default_t0_upper = fit_event.fit_parameters["t0"][1][1]
-    #             fit_event.fit_parameters["t0"][1] = [default_t0_lower, default_t0_upper + delta_t0]
-    #
-    #     for key in fit_event.fit_parameters:
-    #         self.log.debug(
-    #             f"Fit Analyst -- pyLIMA: Final boundaries for {key} = {fit_event.fit_parameters[key][1]}."
-    #         )
-    #     self.log.info(f"Fit Analyst -- pyLIMA: Adding starting parameters:")
-    #     start_guess = []
-    #     for key in fit_event.fit_parameters:
-    #         if key in starting_params:
-    #             self.log.info(
-    #                 f"Fit Analyst -- pyLIMA: Adding starting parameters: {key} = {starting_params[key]}"
-    #             )
-    #             start_guess.append(starting_params[key])
-    #     fit_event.model_parameters_guess = start_guess
-    #
-    #     self.log.info("Fit Analyst -- pyLIMA: Starting fit.")
-    #     fit_event.fit()
-    #     self.log.info("Fit Analyst -- pyLIMA: Fitting finished")
-    #
-    #     # This will have to be modified to be compatible with MOP
-    #     self.log.debug("Fit Analyst -- pyLIMA: Convert model parameters to dictionary.")
-    #     model_parameters = self.gather_parameters(event, fit_event, fitting_method=fitting_method)
-    #
-    #     # Produce fit outputs here
-    #     plots_pylima.plot_pylima(event, fit_event, self.log)
-    #
-    #     if return_norm_lc:
-    #         norm_lc, residuals = self.get_aligned_data(pspl, fit_event.fit_results["best_model"])
-    #         return model_parameters, norm_lc, residuals
-    #
-    #     return model_parameters
-
-    def fit_1S2L(
-        self,
-        fit_name,
-        light_curves,
-        starting_params,
-        parallax,
-        blend,
-        return_norm_lc=False,
-        use_boundaries=None,
-        fitting_method=None,
-        **kwargs
-    ):
-        """
-        Perform a single source-binary lens model fit.
-
-        :param fit_name: A label, but in fact a path to which the plot with
-            the best-fitting model will be saved.
-        :type fit_name: str
-
-        :param light_curves: A list of dictionaries with event name, light curve, survey name,
-            filter name, and, if available, an ephemeris of the space observatory which was
-            used to obtain the observations.
-        :type light_curves: list
-
-        :param starting_params: A dictionary containing starting parameters.
-        :type starting_params: dict
-
-        :param parallax: If `True` microlensing parallax effect will be included in the model,
-            if `False` it will not.
-        :type parallax: bool
-
-        :param blend: If `True` blending will be fitted for this event, if `False`, the model
-            will assume that all light is coming from the source.
-        :type blend: bool
+        :param model_type: Which lens model to fit; "1S1L" (point source-point lens) or
+            "1S2L" (single source-binary lens).
+        :type model_type: str
 
         :param return_norm_lc: If `True`, this method will return a light curve and residuals
             aligned to the best-fitting model it found.
@@ -482,131 +162,131 @@ class FitPylima(Fitter):
         :rtype: list
         """
 
-        # Setup event
-        event_name = fit_name
-        ra, dec = float(starting_params["ra"]), float(starting_params["dec"])
-        event = self.setup_event(event_name, ra, dec, light_curves)
+        if model_type not in ("1S1L", "1S2L"):
+            raise ValueError(f"Unknown model_type: {model_type!r}. Only '1S1L' or '1S2L' are supported.")
 
-        blend_param = "ftotal" if blend else "noblend"
+        with capture_prints(self.log, capture_stderr=True):
+            event_name = fit_name
+            ra, dec = float(starting_params["ra"]), float(starting_params["dec"])
+            event = self.setup_event(event_name, ra, dec, light_curves)
 
-        fancy = pyLIMA_fancy_parameters.StandardFancyParameters()
+            blend_param = "ftotal" if blend else "noblend"
+            parallax_arg = ["Full", int(starting_params["t0"])] if parallax else ["None", 0.0]
 
-        if parallax:
-            self.log.info("Fit Analyst -- pyLIMA: Fitting with microlensing parallax.")
-            usbl = USBL_model.USBLmodel(
-                event,
-                fancy_parameters=fancy,
-                parallax=["Full", int(starting_params["t0"])],
-                blend_flux_parameter=blend_param
-            )
-        else:
-            self.log.info("Fit Analyst -- pyLIMA: Fitting without microlensing parallax.")
-            usbl = USBL_model.USBLmodel(
-                event,
-                fancy_parameters=fancy,
-                parallax=["None", 0.0],
-                blend_flux_parameter=blend_param
-            )
-
-        DE_population, loss_function = None, None
-        for key, value in kwargs.items():
-            if key == "DE_population":
-                DE_population = int(value)
-            if key == "loss_function":
-                loss_function = value
-
-        if fitting_method is not None:
-            self.log.info(f"Fit Analyst -- pyLIMA: Fitting method: {fitting_method}.")
-            if loss_function is None:
-                loss_function = "soft_l1"
-            if fitting_method == "DE":
-                if DE_population is None:
-                    DE_population = 10
-                self.log.debug(
-                    f"Fit Analyst -- pyLIMA: Fitting method set up: DE_pop={DE_population}."
-                )
-                self.log.debug(
-                    f"Fit Analyst -- pyLIMA: Fitting method set up: loss_fun={loss_function}."
-                )
-                fit_event = DE_fit.DEfit(usbl,
-                                         DE_population_size=DE_population,
-                                         loss_function=loss_function
-                                         )
-            elif fitting_method == "TRF":
-                self.log.debug(
-                    f"Fit Analyst -- pyLIMA: Fitting method set up: loss_fun={loss_function}."
-                )
-                fit_event = TRF_fit.TRFfit(usbl, loss_function=loss_function)
-        else:
-            self.log.info("Fit Analyst -- pyLIMA: Using default fitting method (TRF).")
-            fit_event = TRF_fit.TRFfit(usbl, loss_function="soft_l1")
-
-        # Use boundries like in mop.toolbox.fittools
-        if use_boundaries is None:
-            self.log.info("Fit Analyst -- pyLIMA: Using boundaries default for microlensing_ralph.")
-            delta_t0 = 50.0
-            default_t0_lower = fit_event.fit_parameters["t0"][1][0]
-            default_t0_upper = fit_event.fit_parameters["t0"][1][1]
-            fit_event.fit_parameters["t0"][1] = [default_t0_lower, default_t0_upper + delta_t0]
-            fit_event.fit_parameters["u0"][1] = [0.0, 2.0]
-            fit_event.fit_parameters["log_tE"][1] = [-1.0, 3.5]
-            fit_event.fit_parameters["log_rho"][1] = [-5.0, 1.0]
-            fit_event.fit_parameters["log_separation"][1] = [-4.0, 2.0]
-            fit_event.fit_parameters["log_mass_ratio"][1] = [-5.0, 1.0]
-            fit_event.fit_parameters["alpha"][1] = [0.0, 2*np.pi]
-            if parallax:
-                fit_event.fit_parameters["piEN"][1] = [-2.0, 2.0]
-                fit_event.fit_parameters["piEE"][1] = [-2.0, 2.0]
-        else:
-            self.log.info("Fit Analyst -- pyLIMA: Using boundaries passed by the User.")
-            if "t0" not in use_boundaries:
-                delta_t0 = 50.0
-                default_t0_lower = fit_event.fit_parameters["t0"][1][0]
-                default_t0_upper = fit_event.fit_parameters["t0"][1][1]
-                fit_event.fit_parameters["t0"][1] = [default_t0_lower, default_t0_upper + delta_t0]
-            for key in use_boundaries:
-                self.log.debug(
-                    f"Fit Analyst -- pyLIMA: Boundaries for {key} = {use_boundaries[key]}."
-                )
-                fit_event.fit_parameters[key][1] = [use_boundaries[key][0], use_boundaries[key][1]]
-            if "t0" not in use_boundaries:
-                delta_t0 = 50.0
-                default_t0_lower = fit_event.fit_parameters["t0"][1][0]
-                default_t0_upper = fit_event.fit_parameters["t0"][1][1]
-                fit_event.fit_parameters["t0"][1] = [default_t0_lower, default_t0_upper + delta_t0]
-
-        for key in fit_event.fit_parameters:
-            self.log.debug(
-                f"Fit Analyst -- pyLIMA: Final boundaries for {key} = {fit_event.fit_parameters[key][1]}."
-            )
-        self.log.info(f"Fit Analyst -- pyLIMA: Adding starting parameters:")
-
-        start_guess = []
-        for key in fit_event.fit_parameters:
-            if key in starting_params:
+            # Build the model -- this is the main thing that differs between 1S1L and 1S2L
+            if model_type == "1S1L":
                 self.log.info(
-                    f"Fit Analyst -- pyLIMA: Adding starting parameters: {key} = {starting_params[key]}"
+                    f"Fit Analyst -- pyLIMA: Fitting {'with' if parallax else 'without'} "
+                    "microlensing parallax."
                 )
-                start_guess.append(starting_params[key])
+                model = PSPL_model.PSPLmodel(event, parallax=parallax_arg, blend_flux_parameter=blend_param)
+            elif model_type == "1S2L":  # "1S2L"
+                self.log.info(
+                    f"Fit Analyst -- pyLIMA: Fitting {'with' if parallax else 'without'} "
+                    "microlensing parallax."
+                )
+                fancy = pyLIMA_fancy_parameters.StandardFancyParameters()
+                model = USBL_model.USBLmodel(
+                    event, fancy_parameters=fancy, parallax=parallax_arg, blend_flux_parameter=blend_param
+                )
+            else:
+                raise Exception(f"Unknown model type: {model_type!r}.")
 
-        fit_event.model_parameters_guess = start_guess
+            DE_population, loss_function = None, None
+            for key, value in kwargs.items():
+                if key == "DE_population":
+                    DE_population = int(value)
+                if key == "loss_function":
+                    loss_function = value
 
-        self.log.info("Fit Analyst -- pyLIMA: Starting fit.")
-        fit_event.fit()
-        self.log.info("Fit Analyst -- pyLIMA: Fitting finished")
+            if fitting_method is not None:
+                self.log.info(f"Fit Analyst -- pyLIMA: Fitting method: {fitting_method}.")
+                if loss_function is None:
+                    loss_function = "soft_l1"
+                if fitting_method == "DE":
+                    if DE_population is None:
+                        DE_population = 10
+                    self.log.debug(f"Fit Analyst -- pyLIMA: Fitting method set up: DE_pop={DE_population}.")
+                    self.log.debug(f"Fit Analyst -- pyLIMA: Fitting method set up: loss_fun={loss_function}.")
+                    fit_event = DE_fit.DEfit(
+                        model, DE_population_size=DE_population, loss_function=loss_function
+                    )
+                elif fitting_method == "TRF":
+                    self.log.debug(f"Fit Analyst -- pyLIMA: Fitting method set up: loss_fun={loss_function}.")
+                    fit_event = TRF_fit.TRFfit(model, loss_function=loss_function)
+            else:
+                self.log.info("Fit Analyst -- pyLIMA: Using default fitting method (TRF).")
+                fit_event = TRF_fit.TRFfit(model, loss_function="soft_l1")
 
-        # This will have to be modified to be compatible with MOP
-        self.log.debug("Fit Analyst -- pyLIMA: Convert model parameters to dictionary.")
-        model_parameters = self.gather_parameters(event, fit_event, fitting_method=fitting_method)
+            # Use boundaries like in mop.toolbox.fittools
+            if use_boundaries is None:
+                self.log.info("Fit Analyst -- pyLIMA: Using boundaries default for microlensing_ralph.")
+                delta_t0 = 50.0
+                default_t0_lower = fit_event.fit_parameters["t0"][1][0]
+                default_t0_upper = fit_event.fit_parameters["t0"][1][1]
+                fit_event.fit_parameters["t0"][1] = [default_t0_lower, default_t0_upper + delta_t0]
+                fit_event.fit_parameters["u0"][1] = [0.0, 2.0]
 
-        # Produce fit outputs here
-        plots_pylima.plot_pylima(event, fit_event, self.log)
+                # This is the other main thing that differs between 1S1L and 1S2L
+                if model_type == "1S1L":
+                    fit_event.fit_parameters["tE"][1] = [0.0, 1000.0]
+                elif model_type == "1S2L":  # "1S2L"
+                    fit_event.fit_parameters["log_tE"][1] = [-1.0, 3.5]
+                    fit_event.fit_parameters["log_rho"][1] = [-5.0, 1.0]
+                    fit_event.fit_parameters["log_separation"][1] = [-4.0, 2.0]
+                    fit_event.fit_parameters["log_mass_ratio"][1] = [-5.0, 1.0]
+                    fit_event.fit_parameters["alpha"][1] = [0.0, 2 * np.pi]
 
-        if return_norm_lc:
-            norm_lc, residuals = self.get_aligned_data(usbl, fit_event.fit_results["best_model"])
-            return model_parameters, norm_lc, residuals
+                if parallax:
+                    fit_event.fit_parameters["piEN"][1] = [-2.0, 2.0]
+                    fit_event.fit_parameters["piEE"][1] = [-2.0, 2.0]
+            else:
+                self.log.info("Fit Analyst -- pyLIMA: Using boundaries passed by the User.")
+                if "t0" not in use_boundaries:
+                    delta_t0 = 50.0
+                    default_t0_lower = fit_event.fit_parameters["t0"][1][0]
+                    default_t0_upper = fit_event.fit_parameters["t0"][1][1]
+                    fit_event.fit_parameters["t0"][1] = [default_t0_lower, default_t0_upper + delta_t0]
+                for key in use_boundaries:
+                    self.log.debug(f"Fit Analyst -- pyLIMA: Boundaries for {key} = {use_boundaries[key]}.")
+                    fit_event.fit_parameters[key][1] = [use_boundaries[key][0], use_boundaries[key][1]]
+                if "t0" not in use_boundaries:
+                    delta_t0 = 50.0
+                    default_t0_lower = fit_event.fit_parameters["t0"][1][0]
+                    default_t0_upper = fit_event.fit_parameters["t0"][1][1]
+                    fit_event.fit_parameters["t0"][1] = [default_t0_lower, default_t0_upper + delta_t0]
 
-        return model_parameters
+            for key in fit_event.fit_parameters:
+                self.log.debug(
+                    f"Fit Analyst -- pyLIMA: Final boundaries for {key} = {fit_event.fit_parameters[key][1]}."
+                )
+            self.log.info("Fit Analyst -- pyLIMA: Adding starting parameters:")
+
+            start_guess = []
+            for key in fit_event.fit_parameters:
+                if key in starting_params:
+                    self.log.info(
+                        f"Fit Analyst -- pyLIMA: Adding starting parameters: {key} = {starting_params[key]}"
+                    )
+                    start_guess.append(starting_params[key])
+            fit_event.model_parameters_guess = start_guess
+
+            self.log.info("Fit Analyst -- pyLIMA: Starting fit.")
+            fit_event.fit()
+            self.log.info("Fit Analyst -- pyLIMA: Fitting finished")
+
+            # This will have to be modified to be compatible with MOP
+            self.log.debug("Fit Analyst -- pyLIMA: Convert model parameters to dictionary.")
+            model_parameters = self.gather_parameters(event, fit_event, fitting_method=fitting_method)
+
+            # Produce fit outputs here
+            plots_pylima.plot_pylima(event, fit_event, self.log)
+
+            if return_norm_lc:
+                norm_lc, residuals = self.get_aligned_data(model, fit_event.fit_results["best_model"])
+                return model_parameters, norm_lc, residuals
+
+            return model_parameters
 
     def gather_parameters(self, event, model_fit, fitting_method=None):
         """

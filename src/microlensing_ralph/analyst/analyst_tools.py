@@ -387,6 +387,7 @@ def get_anomaly_information(anomaly_seqs, residuals):
 
     amplitude = 0.0
     t_anomaly = np.nan
+
     for band in residuals:
         lc = residuals[band]
         anomalous_idx = np.intersect1d(np.where(lc[:, 0] > t_start), np.where(lc[:, 0] < t_end))
@@ -409,7 +410,7 @@ def get_anomaly_information(anomaly_seqs, residuals):
 
 
 
-def get_binary_starting_params(t0, u0, tE, t_anomaly, duration_anomaly, ampl_anomaly):
+def get_binary_starting_params(t0, u0, tE, t_anomaly, anomaly_duration, ampl_anomaly):
     """
     Get starting parameters for binary lens fitting.
 
@@ -425,8 +426,8 @@ def get_binary_starting_params(t0, u0, tE, t_anomaly, duration_anomaly, ampl_ano
     :param t_anomaly: Time of peak of the anomaly.
     :type t_anomaly: float
 
-    :param duration_anomaly: How long anomaly lasts, in days.
-    :type duration_anomaly: float
+    :param anomaly_duration: How long anomaly lasts, in days.
+    :type anomaly_duration: float
 
     :param ampl_anomaly: Amplitude of the anomaly.
     :type ampl_anomaly: float
@@ -439,7 +440,7 @@ def get_binary_starting_params(t0, u0, tE, t_anomaly, duration_anomaly, ampl_ano
     """
 
     # Rho
-    rho = duration_anomaly / tE
+    rho = anomaly_duration / tE
 
     # Mass ratio
     mass_ratio = np.abs(ampl_anomaly) * rho**2 / 2.0

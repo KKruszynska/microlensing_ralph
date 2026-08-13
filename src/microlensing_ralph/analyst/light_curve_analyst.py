@@ -118,6 +118,7 @@ class LightCurveAnalyst(BaseAnalyst):
         self.config["max_acceptable_err"] = config_dict["lc_analyst"].get("max_acceptable_err", None)
         self.config["hampel"] = config_dict["lc_analyst"].get("hampel", None)
         self.config["save_outlier_results"] = config_dict["lc_analyst"].get("save_outlier_results", False)
+        self.config["to_MJD"] = config_dict["lc_analyst"].get("to_MJD", False)
 
         self.log.debug("LC Analyst: Finished reading lc config.")
 
@@ -305,6 +306,8 @@ class LightCurveAnalyst(BaseAnalyst):
                 json.dump(self.outlier_seqs, file, ensure_ascii=False, indent=4)
 
             for entry in self.light_curves:
+                print("====================")
+                print(self.config)
                 lc = np.array(entry["light_curve"])
                 outlier_res = self.outlier_results[f"{entry["survey"]}_{entry["band"]}"]
                 outlier_seqs = self.outlier_seqs[f"{entry["survey"]}_{entry["band"]}"]

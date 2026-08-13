@@ -209,7 +209,10 @@ class FitPylima(Fitter):
                     self.log.debug(f"Fit Analyst -- pyLIMA: Fitting method set up: DE_pop={DE_population}.")
                     self.log.debug(f"Fit Analyst -- pyLIMA: Fitting method set up: loss_fun={loss_function}.")
                     fit_event = DE_fit.DEfit(
-                        model, DE_population_size=DE_population, loss_function=loss_function
+                        model,
+                        DE_population_size=DE_population,
+                        loss_function=loss_function,
+                        display_progress=True
                     )
                 elif fitting_method == "TRF":
                     self.log.debug(f"Fit Analyst -- pyLIMA: Fitting method set up: loss_fun={loss_function}.")

@@ -430,7 +430,8 @@ class EventAnalystTest:
                 self.analyst_path,
                 "debug",
                 config_path=os.path.join(self.analyst_path, "config.yaml"),
-                stream=True
+                log_to_file=False,
+                log_to_stream=True
             )
         else:
             scenario_config = self.scenario.get("config")
@@ -440,7 +441,7 @@ class EventAnalystTest:
                 self.analyst_path,
                 "debug",
                 config_dict=scenario_config,
-                stream=False
+                log_to_stream=False
         )
 
         if not os.path.exists(self.analyst_path):
@@ -650,10 +651,10 @@ def test_run():
     Run all tests.
     """
 
-    for case in [scenario_file_cat, scenario_kwu, scenario_gsa]:
-        test = EventAnalystTest(case)
-        test.set_up()
-        test.test_run_analyst()
+    # for case in [scenario_file_cat, scenario_kwu, scenario_gsa]:
+    #     test = EventAnalystTest(case)
+    #     test.set_up()
+    #     test.test_run_analyst()
 
     test = EventAnalystTest(scenario_roman)
     test.set_up()

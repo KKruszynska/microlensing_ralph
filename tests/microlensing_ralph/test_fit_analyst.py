@@ -165,16 +165,16 @@ scenario_gsa = {
 }
 
 scenario_roman = {
-    "event_name": "ulwdc1_018",
-    "ra": 267.871,
-    "dec": -29.6712,
+    "event_name": "ulwdc1_040",
+    "ra": 267.715,
+    "dec": -28.3235,
     "analyst_path": os.path.join(ralph_output, "fit_analyst"),
     "lc_analyst": {"acceptable_mag_range":
                        {"upper_limit": -5, "lower_limit": 30},
                    "max_acceptable_err": 1.0,
                    "hampel": {
-                       "window": "1D",
-                       "n_sigma": 3.0,
+                       "window": "4D",
+                       "n_sigma": 2.0,
                        "use_weighted": False,
                    },
                    "save_outlier_results": True,
@@ -191,15 +191,15 @@ scenario_roman = {
             "save_results": True,
             "to_MJD": True,
             "af_setup": {
-                "window": "3D",
-                "n_sigma": 2.0,
+                "window": "7D",
+                "n_sigma": 3.0,
                 "use_weighted": True,
             },
         },
         "model_fit_configuration": {
             "1S1L_no_blend_no_piE": {
                 "fitting_package": "pyLIMA",
-                "fitting_method": "TRF",
+                "fitting_method": "DE",
                 "boundaries": {
                     "u0": [0.0, 2.0],
                 }
@@ -214,6 +214,9 @@ scenario_roman = {
             "1S1L_blend_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "TRF",
+                "fitting_method_args": {
+                    "loss_function" : "chi2",
+                },
                 "boundaries": {
                     "u0": [-2.0, 2.0],
                     "piEN": [-1.0, 1.0],
@@ -241,7 +244,7 @@ scenario_roman = {
             },
             "1S2L_blend_piE": {
                 "fitting_package": "pyLIMA",
-                "fitting_method": "TRF",
+                "fitting_method": "DE",
                 "fitting_method_args": {
                     "loss_function": "chi2",
                 },
@@ -252,7 +255,7 @@ scenario_roman = {
         {
             "survey": "Roman",
             "band": "W149",
-            "path": os.path.join(ralph_light_curves, "ulwdc1_018_W149.txt"),
+            "path": os.path.join(ralph_light_curves, "ulwdc1_040_W149.txt"),
         },
     ],
 }
@@ -261,64 +264,417 @@ answers_roman = {
     "best_model": "1S1L_blend_piE_p",
     "best_results": {
         "1S1L_blend_piE_p": {
-            "t0_par": 2458752,
-            "t0": 2458743.906,
-            "t0_error": 0.026,
-            "u0": 0.01155,
-            "u0_error": 0.00092,
-            "tE": 1000.0,
-            "tE_error": 79.807,
-            "piEN": -0.40413,
-            "piEN_error": 0.03165,
-            "piEE": -0.17856,
-            "piEE_error": 0.01415,
-            "fsource_Roman_W149": 2.92895,
-            "fsource_Roman_W149_error": 0.23624,
-            "fsource_Roman_W149_mag": 26.233,
-            "fsource_Roman_W149_mag_error": 0.088,
-            "ftotal_Roman_W149": 991.89766,
-            "ftotal_Roman_W149_error": 0.07052,
-            "ftotal_Roman_W149_mag": 19.909,
+            "t0_par": 2459807,
+            "t0": 2459807.777,
+            "t0_error": 0.298,
+            "u0": 1.28867,
+            "u0_error": 0.29066,
+            "tE": 20.946,
+            "tE_error": 2.862,
+            "piEN": 1.28348,
+            "piEN_error": 0.89741,
+            "piEE": -0.49666,
+            "piEE_error": 0.4909,
+            "fsource_Roman_W149": 546.62527,
+            "fsource_Roman_W149_error": 293.64902,
+            "fsource_Roman_W149_mag": 20.556,
+            "fsource_Roman_W149_mag_error": 0.583,
+            "ftotal_Roman_W149": 433.35323,
+            "ftotal_Roman_W149_error": 0.02018,
+            "ftotal_Roman_W149_mag": 20.808,
             "ftotal_Roman_W149_mag_error": 0.0,
-            "chi2": 180988.529,
-            "fblend_Roman_W149": 988.96871,
-            "fblend_Roman_W149_error": 0.24654088504749067,
-            "fblend_Roman_W149_mag": 19.912,
-            "fblend_Roman_W149_mag_error": 0.0,
-            "source_magnitude": 26.233,
-            "source_mag_error": 0.088,
-            "blend_magnitude": 19.912,
-            "blend_mag_error": 0.0,
-            "baseline_magnitude": 19.909,
+            "chi2": 29898.308,
+            "fblend_Roman_W149": -113.27204,
+            "fblend_Roman_W149_error": 293.6490206933999,
+            "fblend_Roman_W149_mag": np.nan,
+            "fblend_Roman_W149_mag_error": 2.815,
+            "source_magnitude": 20.556,
+            "source_mag_error": 0.583,
+            "blend_magnitude": np.nan,
+            "blend_mag_error": 2.815,
+            "baseline_magnitude": 20.808,
             "baseline_mag_error": 0.0,
-            "red_chi2": 4.716,
-            "sw_test": 0.45,
-            "ad_test": 2922.717,
-            "ks_test": 0.024,
-            "aic_test": 181002.529,
-            "bic_test": 181062.417
+            "red_chi2": 0.81,
+            "sw_test": 0.995,
+            "ad_test": 30.726,
+            "ks_test": 0.02,
+            "aic_test": 29912.308,
+            "bic_test": 29971.925
         },
         "1S1L_blend_no_piE": {
             "t0_par": 0.0,
-            "t0": 2458749.39,
-            "t0_error": 0.057,
-            "u0": 0.3,
-            "u0_error": 0.05,
-            "tE": 14.8,
-            "tE_error": 4.288,
-            "fsource_Roman_W149": 352515.59,
-            "fsource_Roman_W149_error": 4000.0,
-            "ftotal_Roman_W149": 992.76,
-            "ftotal_Roman_W149_error": 0.06583,
+            "t0": 2459807.67,
+            "t0_error": 0.235,
+            "u0": 1.01855,
+            "u0_error": 0.08646,
+            "tE": 23.095,
+            "tE_error": 1.151,
+            "fsource_Roman_W149": 322.68081,
+            "fsource_Roman_W149_error": 58.48191,
+            "fsource_Roman_W149_mag": 21.128,
+            "fsource_Roman_W149_mag_error": 0.197,
+            "ftotal_Roman_W149": 433.36453,
+            "ftotal_Roman_W149_error": 0.02249,
+            "ftotal_Roman_W149_mag": 20.808,
+            "ftotal_Roman_W149_mag_error": 0.0,
+            "chi2": 29899.842,
+            "fblend_Roman_W149": 110.68372,
+            "fblend_Roman_W149_error": 58.481914324414866,
+            "fblend_Roman_W149_mag": 22.29,
+            "fblend_Roman_W149_mag_error": 0.574,
+            "source_magnitude": 21.128,
+            "source_mag_error": 0.197,
+            "blend_magnitude": 22.29,
+            "blend_mag_error": 0.574,
+            "baseline_magnitude": 20.808,
+            "baseline_mag_error": 0.0,
+            "red_chi2": 0.81,
+            "sw_test": 0.995,
+            "ad_test": 30.638,
+            "ks_test": 0.02,
+            "aic_test": 29909.842,
+            "bic_test": 29952.426
         },
     },
-    "outlier_results_path": os.path.join(ralph_input, "test_results", "ulwdc1_018_outlier_results.npz"),
+    "outlier_results_path": os.path.join(ralph_input, "test_results", "ulwdc1_040_outlier_results.npz"),
     "outlier_seqs": {
-        "Roman_W149": [{
-            "t_start": 2458743.874974,
-            "t_end": 2458744.146987,
-            "sequence_length": 23
-        }]
+        "Roman_W149": [
+            {
+                "t_start": 2458348.288254,
+                "t_end": 2458348.309307,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458353.55577,
+                "t_end": 2458353.576823,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458354.111995,
+                "t_end": 2458354.143575,
+                "sequence_length": 3
+            },
+            {
+                "t_start": 2458359.839326,
+                "t_end": 2458359.860379,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458362.011596,
+                "t_end": 2458362.032649,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458366.143935,
+                "t_end": 2458366.164987,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458369.837512,
+                "t_end": 2458369.858564,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458379.363683,
+                "t_end": 2458379.384736,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458381.544806,
+                "t_end": 2458381.565859,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458388.982919,
+                "t_end": 2458389.003971,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458393.316932,
+                "t_end": 2458393.337985,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458398.814355,
+                "t_end": 2458398.835408,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458405.12949,
+                "t_end": 2458405.150543,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458528.766369,
+                "t_end": 2458528.787422,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458548.153883,
+                "t_end": 2458548.174936,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458552.842448,
+                "t_end": 2458552.8635,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458554.123321,
+                "t_end": 2458554.144374,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458571.12971,
+                "t_end": 2458571.150763,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458572.451016,
+                "t_end": 2458572.472069,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458572.965136,
+                "t_end": 2458572.986188,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458574.014428,
+                "t_end": 2458574.035481,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458579.606589,
+                "t_end": 2458579.657548,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458583.582705,
+                "t_end": 2458583.633664,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458587.390399,
+                "t_end": 2458587.411452,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458588.166006,
+                "t_end": 2458588.187058,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458588.366007,
+                "t_end": 2458588.38706,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458714.615591,
+                "t_end": 2458714.636644,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458719.053195,
+                "t_end": 2458719.074248,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458730.016462,
+                "t_end": 2458730.037515,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458733.478459,
+                "t_end": 2458733.499512,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458743.843395,
+                "t_end": 2458743.864448,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458755.341835,
+                "t_end": 2458755.362887,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458759.075844,
+                "t_end": 2458759.096897,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458761.678023,
+                "t_end": 2458761.699075,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458767.93,
+                "t_end": 2458767.951052,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458775.483902,
+                "t_end": 2458775.504955,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2458782.428948,
+                "t_end": 2458782.45,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459623.233745,
+                "t_end": 2459623.254798,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459632.926666,
+                "t_end": 2459632.947719,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459634.521657,
+                "t_end": 2459634.54271,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459635.288411,
+                "t_end": 2459635.309463,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459636.169281,
+                "t_end": 2459636.190334,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459645.369134,
+                "t_end": 2459645.390187,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459648.013419,
+                "t_end": 2459648.034471,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459649.996213,
+                "t_end": 2459650.017266,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459650.299806,
+                "t_end": 2459650.320858,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459654.821621,
+                "t_end": 2459654.842674,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459665.58656,
+                "t_end": 2459665.607613,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459669.80311,
+                "t_end": 2459669.824163,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459677.199117,
+                "t_end": 2459677.220169,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459678.752003,
+                "t_end": 2459678.773056,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459679.580241,
+                "t_end": 2459679.601294,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459680.671639,
+                "t_end": 2459680.692692,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459830.474329,
+                "t_end": 2459830.525288,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459855.56812,
+                "t_end": 2459855.955924,
+                "sequence_length": 34
+            },
+            {
+                "t_start": 2459865.713675,
+                "t_end": 2459865.734728,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459869.091461,
+                "t_end": 2459869.112513,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459869.395053,
+                "t_end": 2459869.416106,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459875.720714,
+                "t_end": 2459875.741767,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2459997.271208,
+                "t_end": 2459997.292261,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2460016.648195,
+                "t_end": 2460016.669248,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2460030.243547,
+                "t_end": 2460030.2646,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2460039.611823,
+                "t_end": 2460039.632875,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2460042.559699,
+                "t_end": 2460042.580752,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2460052.831571,
+                "t_end": 2460052.852624,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2460056.902425,
+                "t_end": 2460056.923477,
+                "sequence_length": 2
+            },
+            {
+                "t_start": 2460057.353386,
+                "t_end": 2460057.374439,
+                "sequence_length": 2
+            }
+        ]
     }
 }
 
@@ -516,7 +872,18 @@ class FitAnalystTest:
         anomaly_found = analyst.perform_anomaly_finding()
         assert anomaly_found
 
-        analyst.fit_1s2l_finished()
+        starting_params = {
+            "ra": config["ra"],
+            "dec": config["dec"],
+            "t0": 2459807.97,
+            "u0": 0.95,
+            "log_tE": np.log10(24.0),
+            "log_rho": np.log10(0.0013),
+            "log_separation": np.log10(0.39),
+            "log_mass_ratio": np.log10(0.00075),
+            "alpha": 6.14,
+        }
+        analyst.fit_1s2l_finished(starting_params=starting_params)
 
         # with open(self.scenario.get("fit_result"), "r") as file:
         #     expected_fit_result = json.load(file)

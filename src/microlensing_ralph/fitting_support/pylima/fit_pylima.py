@@ -162,8 +162,8 @@ class FitPylima(Fitter):
         :rtype: list
         """
 
-        if model_type not in ("1S1L", "1S2L"):
-            raise ValueError(f"Unknown model_type: {model_type!r}. Only '1S1L' or '1S2L' are supported.")
+        if model_type not in ("1S1L", "1S2L", "2S1L"):
+            raise ValueError(f"Unknown model_type: {model_type!r}. Only 1S1L, 1S2L or 2S1L are supported.")
 
         with capture_prints(self.log, capture_stderr=True):
             event_name = fit_name
@@ -189,6 +189,9 @@ class FitPylima(Fitter):
                 model = USBL_model.USBLmodel(
                     event, fancy_parameters=fancy, parallax=parallax_arg, blend_flux_parameter=blend_param
                 )
+            elif model_type == "2S1L":
+                model = PSPL_model.PSPLmodel(event, double_source=['Static', int(starting_params["t0"])],
+                                             parallax=parallax_arg, blend_flux_parameter=blend_param)
             else:
                 raise Exception(f"Unknown model type: {model_type!r}.")
 
@@ -235,10 +238,13 @@ class FitPylima(Fitter):
                     fit_event.fit_parameters["tE"][1] = [0.0, 1000.0]
                 elif model_type == "1S2L":  # "1S2L"
                     fit_event.fit_parameters["log_tE"][1] = [-1.0, 3.5]
-                    fit_event.fit_parameters["log_rho"][1] = [-5.0, 1.0]
-                    fit_event.fit_parameters["log_separation"][1] = [-4.0, 2.0]
+                    fit_event.fit_parameters["log_rho"][1] = [-5.0, 2.0]
+                    fit_event.fit_parameters["log_separation"][1] = [-5.0, 2.0]
                     fit_event.fit_parameters["log_mass_ratio"][1] = [-5.0, 1.0]
                     fit_event.fit_parameters["alpha"][1] = [0.0, 2 * np.pi]
+                elif model_type == "2S1L":
+                    fit_event.fit_parameters["delta_t0"][1] = [-100.0, 100.0]
+                    fit_event.fit_parameters["delta_u0"][1] = [-2.0, 2.0]
 
                 if parallax:
                     fit_event.fit_parameters["piEN"][1] = [-2.0, 2.0]
@@ -449,16 +455,19 @@ class FitPylima(Fitter):
                 np.ravel(res[0]["photometry"][0]) / np.ravel(res[1]["photometry"][0])
             )
             model_params["sw_test"] = np.around(sw_test[0], 3)
+            model_params["sw_test_result"] = sw_test[2]
 
             ad_test = stats.normal_Anderson_Darling(
                 np.ravel(res[0]["photometry"][0]) / np.ravel(res[1]["photometry"][0])
             )
             model_params["ad_test"] = np.around(ad_test[0], 3)
+            model_params["ad_test_result"] = ad_test[2]
 
             ks_test = stats.normal_Kolmogorov_Smirnov(
                 np.ravel(res[0]["photometry"][0]) / np.ravel(res[1]["photometry"][0])
             )
             model_params["ks_test"] = np.around(ks_test[0], 3)
+            model_params["ks_test_result"] = ks_test[2]
 
             aic_test = stats.Akaike_Information_Criterion(model_params["chi2"], n_parameters)
             model_params["aic_test"] = np.around(aic_test, 3)
@@ -470,8 +479,11 @@ class FitPylima(Fitter):
             self.log.error(f"Fit Analyst: {err}, {type(err)}")
 
             model_params["sw_test"] = np.nan
+            model_params["sw_test_result"] = np.nan
             model_params["ad_test"] = np.nan
+            model_params["ad_test_result"] = np.nan
             model_params["ks_test"] = np.nan
+            model_params["ks_test_result"] = np.nan
             model_params["aic_test"] = np.nan
             model_params["bic_test"] = np.nan
 

@@ -130,7 +130,7 @@ class StreamToLogger:
 
 
 @contextmanager
-def capture_prints(log, log_level=logging.ERROR, capture_stderr=False):
+def capture_prints(log, log_level=logging.INFO, capture_stderr=False):
     """
     Written with the help of Claude.ai.
 
@@ -142,7 +142,7 @@ def capture_prints(log, log_level=logging.ERROR, capture_stderr=False):
 
     sys.stdout = StreamToLogger(log, log_level)
     if capture_stderr:
-        sys.stderr = StreamToLogger(log, logging.ERROR)
+        sys.stderr = StreamToLogger(log, log_level)
 
     try:
         yield log

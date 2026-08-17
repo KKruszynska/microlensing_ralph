@@ -232,6 +232,16 @@ scenario_roman = {
                     "piEE": [-1.0, 1.0],
                 }
             },
+            "1S2L_no_blend_no_piE": {
+                "fitting_package": "pyLIMA",
+                "fitting_method": "TRF",
+                "fitting_method_args": {
+                    "loss_function" : "chi2",
+                },
+                "boundaries": {
+                    "u0": [0.0, 2.5],
+                }
+            },
             "1S2L_blend_no_piE": {
                 "fitting_package": "pyLIMA",
                 "fitting_method": "TRF",
@@ -242,9 +252,16 @@ scenario_roman = {
                     "u0": [0.0, 2.5],
                 }
             },
+            "1S2L_no_blend_piE": {
+                "fitting_package": "pyLIMA",
+                "fitting_method": "TRF",
+                "fitting_method_args": {
+                    "loss_function": "chi2",
+                },
+            },
             "1S2L_blend_piE": {
                 "fitting_package": "pyLIMA",
-                "fitting_method": "DE",
+                "fitting_method": "TRF",
                 "fitting_method_args": {
                     "loss_function": "chi2",
                 },
@@ -263,6 +280,30 @@ scenario_roman = {
 answers_roman = {
     "best_model": "1S1L_blend_piE_p",
     "best_results": {
+    "1S1L_no_blend_no_piE": {
+            "t0_par": 0.0,
+            "t0": 2459806.339,
+            "t0_error": 250.688,
+            "u0": 1.16217,
+            "u0_error": 0.36303,
+            "tE": 21.951,
+            "tE_error": 18.488,
+            "fsource_Roman_W149": 433.34238,
+            "fsource_Roman_W149_error": 1.15646,
+            "fsource_Roman_W149_mag": 20.808,
+            "fsource_Roman_W149_mag_error": 0.003,
+            "chi2": 29903.145,
+            "source_magnitude": 20.808,
+            "source_mag_error": 0.003,
+            "baseline_magnitude": 20.808,
+            "baseline_mag_error": 0.003,
+            "red_chi2": 0.81,
+            "sw_test": 0.995,
+            "ad_test": 30.585,
+            "ks_test": 0.02,
+            "aic_test": 29911.145,
+            "bic_test": 29945.212
+        },
         "1S1L_blend_piE_p": {
             "t0_par": 2459807,
             "t0": 2459807.777,
@@ -869,7 +910,7 @@ class FitAnalystTest:
         analyst.best_model = self.answer.get("best_model")
         analyst.best_results = self.answer.get("best_results")
 
-        anomaly_found = analyst.perform_anomaly_finding()
+        anomaly_found = analyst.perform_anomaly_finding("single_finished_test")
         assert anomaly_found
 
         starting_params = {
@@ -882,11 +923,55 @@ class FitAnalystTest:
             "log_separation": np.log10(0.39),
             "log_mass_ratio": np.log10(0.00075),
             "alpha": 6.14,
+            "piEN": 0.0,
+            "piEE": 0.0
         }
-        analyst.fit_1s2l_finished(starting_params=starting_params)
+        analyst.fit_1s2l_finished(start_params=starting_params)
+        analyst.best_model = analyst.evaluate_models()
+        if analyst.config.get("anomaly_finder", None) is not None:
+            anomaly_found = analyst.perform_anomaly_finding("multiple_finished")
+            if anomaly_found:
+                analyst.log.debug(f"Anomaly found. Pass relevant information to somewhere.")
 
-        # with open(self.scenario.get("fit_result"), "r") as file:
-        #     expected_fit_result = json.load(file)
+        analyst.log.debug("Fit Analyst: Best models:")
+        for model in analyst.best_results:
+            params = analyst.best_results[model]
+            parameters_to_log = ["t0", "u0", "tE", "piEN", "piEE", "log_tE", "log_rho", "log_separation",
+                                 "log_mass_ratio", "alpha"]
+            log_statement = ""
+            for parameter in params:
+                if parameter in parameters_to_log:
+                    log_statement += f"{parameter}: {params[parameter]:.2f} \n"
+
+            analyst.log.debug(
+                f"Fit Analyst: {model:s} : \n"
+                f"{log_statement}"
+            )
+
+        # Find best fitting model
+        analyst.log.debug("Fit Analyst: Find best-fitting model.")
+        analyst.best_model = analyst.evaluate_models()
+        analyst.log.info(f"Fit Analyst: Best fitting model: {analyst.best_model}")
+
+        # Save best results statistics
+        file_name = os.path.join(analyst.analyst_path, "fit_stats.txt")
+        with open(file_name, "w", encoding="utf-8") as file:
+            file.write(
+                f"{'# name':<20s} : {'chi2':<9s} {'red_chi2':<9s} "
+                f"{'SW':<9s} {'SW_res':<9s} {'AD':<9s} {'AD_res':<9s} "
+                f"{'KS':<9s} {'KS_res':<9s} {'AIC':<9s} {'BIC':<9s}\n"
+            )
+            file.write("#------------------------------------------------------------------------------------------\n")
+            for model in analyst.best_results:
+                params = analyst.best_results[model]
+                file.write(
+                    f"{model:20s} : {params['chi2']:9.2f} {params['red_chi2']:9.2f}"
+                    f"{params['sw_test']:9.2f} {params['sw_test_result']:9.2f} "
+                    f"{params['ad_test']:9.2f} {params['ad_test_result']:9.2f} "
+                    f"{params['ks_test']:9.2f} {params['ks_test_result']:9.2f} "
+                    f"{params['aic_test']:9.2f} {params['bic_test']:9.2f}\n"
+                )
+
 
         # for model in expected_fit_result:
         #     if model != "1S1L_no_blend_no_piE":

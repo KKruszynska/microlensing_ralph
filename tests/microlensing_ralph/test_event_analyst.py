@@ -651,10 +651,10 @@ def test_run():
     Run all tests.
     """
 
-    # for case in [scenario_file_cat, scenario_kwu, scenario_gsa]:
-    #     test = EventAnalystTest(case)
-    #     test.set_up()
-    #     test.test_run_analyst()
+    for case in [scenario_file_cat, scenario_kwu, scenario_gsa]:
+        test = EventAnalystTest(case)
+        test.set_up()
+        test.test_run_analyst()
 
     test = EventAnalystTest(scenario_roman)
     test.set_up()

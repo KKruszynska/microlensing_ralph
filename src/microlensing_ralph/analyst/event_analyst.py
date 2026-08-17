@@ -428,7 +428,7 @@ if __name__ == "__main__":
             log.error(error_string)
             logs.close_log(log)
         else:
-            print("Event Analyst: Error encountered while running an Event Analyst.\n")
-            print(error_string)
+            raise UnboundLocalError("Event Analyst: Error encountered while running an Event Analyst.\n" +
+                                    f"{error_string}")
     else:
         event_analyst.run_single_analyst()

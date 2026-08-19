@@ -393,12 +393,13 @@ def get_anomaly_information(anomaly_seqs, residuals):
         anomalous_idx = np.intersect1d(np.where(lc[:, 0] > t_start), np.where(lc[:, 0] < t_end))
         anomalous_res = lc[anomalous_idx, :]
 
-        max_idx = np.argmax(np.abs(anomalous_res[:,1]))
-        ampl = 0 - anomalous_res[max_idx, 1]
+        if len(anomalous_res) > 0:
+            max_idx = np.argmax(np.abs(anomalous_res[:,1]))
+            ampl = 0 - anomalous_res[max_idx, 1]
 
-        if np.abs(ampl) > np.abs(amplitude):
-            amplitude = ampl
-            t_anomaly = anomalous_res[max_idx, 0]
+            if np.abs(ampl) > np.abs(amplitude):
+                amplitude = ampl
+                t_anomaly = anomalous_res[max_idx, 0]
 
         result = {
             "t_anomaly": t_anomaly,

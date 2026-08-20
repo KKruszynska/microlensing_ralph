@@ -41,13 +41,62 @@ scenario = {
     ],
 }
 
+scenario_roman = {
+    "event_name": "ulwdc1_040",
+    "ra": 267.715,
+    "dec": -28.3235,
+    "analyst_path": os.path.join(ralph_output, "fit_analyst"),
+    "light_curves": [
+        {
+            "survey": "Roman",
+            "band": "W149",
+            "path": os.path.join(ralph_light_curves, "ulwdc1_040_W149.txt"),
+        },
+    ],
+}
+
+model_roman = {
+    "best_results": {
+        "1S1L_no_blend_no_piE": {
+            "t0_par": 0.0,
+            "t0": 2459805.628,
+            "t0_error": 367.374,
+            "u0": 1.16008,
+            "u0_error": 0.35924,
+            "tE": 22.066,
+            "tE_error": 21.221,
+            "fsource_Roman_W149": 433.34169,
+            "fsource_Roman_W149_error": 1.13359,
+            "fsource_Roman_W149_mag": 20.808,
+            "fsource_Roman_W149_mag_error": 0.003,
+            "fsource_Roman_Z087": 112.84108,
+            "fsource_Roman_Z087_error": 0.29438,
+            "fsource_Roman_Z087_mag": 22.269,
+            "fsource_Roman_Z087_mag_error": 0.005,
+            "chi2": 31163.112,
+            "source_magnitude": 20.808,
+            "source_mag_error": 0.003,
+            "baseline_magnitude": 20.808,
+            "baseline_mag_error": 0.003,
+            "red_chi2": 0.826,
+            "sw_test": 0.995,
+            "sw_test_result": 0,
+            "ad_test": 30.578,
+            "ad_test_result": 0,
+            "ks_test": 0.02,
+            "ks_test_result": 0,
+            "aic_test": 31173.112,
+            "bic_test": 31215.801
+        },
+    },
+}
 
 class TestPylima:
     """
     Testing pyLIMA fitting implementation.
     """
 
-    def __init__(self, scenario):
+    def __init__(self, scenario, model_params=None):
         self.ra = scenario["ra"]
         self.dec = scenario["dec"]
         light_curves = []
@@ -72,6 +121,7 @@ class TestPylima:
 
         self.light_curves = light_curves
         self.event_name = scenario["event_name"]
+        self.model_params = model_params
 
     def test_create_event(self):
         """
@@ -167,22 +217,48 @@ class TestPylima:
 
         logs.close_log(log)
 
+    def test_redo_stats_and_plots(self):
+        """
+                Testing pylima parallax model fit implementation.
+                """
+        log = logs.start_log(os.path.join(ralph_output, "pyLIMA"),
+                             "debug",
+                             event_name=self.event_name
+                             )
+
+        fit_model = FitPylima(log)
+
+        if self.model_params is not None:
+            for model_label in self.model_params["best_results"]:
+                parameters = self.model_params["best_results"].get(model_label)
+                updated_params = fit_model.redo_stats_and_plots(model_label,
+                                     self.ra, self.dec,
+                                     parameters,
+                                     self.light_curves
+                                     )
+                print("=====================")
+                print(updated_params)
+
+        logs.close_log(log)
+
 
 def test_run():
     """
     Run pylima fitting tests.
     """
 
-    test = TestPylima(scenario)
-    test.test_create_event()
-    test.test_fit_pspl()
-    test.test_fit_parallax()
+    # test = TestPylima(scenario)
+    # test.test_create_event()
+    # test.test_fit_pspl()
+    # test.test_fit_parallax()
+    test_roman = TestPylima(scenario_roman, model_params=model_roman)
+    test_roman.test_redo_stats_and_plots()
 
-    analyst_path = os.path.join(ralph_output, "pyLIMA" )
-    event_names = ["test_pyLIMA_fits_pie", "test_pylima_fits_event", "test_pylima_fits_pspl"]
-
-    for event in event_names:
-        fpath = os.path.join(analyst_path, event + "_analyst.log")
-        output = Path(fpath)
-        if output.exists():
-            os.remove(output)
+    # analyst_path = os.path.join(ralph_output, "pyLIMA" )
+    # event_names = ["test_pyLIMA_fits_pie", "test_pylima_fits_event", "test_pylima_fits_pspl"]
+    #
+    # for event in event_names:
+    #     fpath = os.path.join(analyst_path, event + "_analyst.log")
+    #     output = Path(fpath)
+    #     if output.exists():
+    #         os.remove(output)

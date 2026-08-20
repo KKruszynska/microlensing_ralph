@@ -1,6 +1,6 @@
 import numpy as np
 from pyLIMA import event, telescopes, toolbox
-from pyLIMA.fits import DE_fit, TRF_fit, stats
+from pyLIMA.fits import ML_fit, DE_fit, TRF_fit, stats
 from pyLIMA.fits.objective_functions import photometric_residuals_in_magnitude
 from pyLIMA.models import PSPL_model, USBL_model, pyLIMA_fancy_parameters
 from pyLIMA.outputs.pyLIMA_plots import create_telescopes_to_plot_model
@@ -93,11 +93,68 @@ class FitPylima(Fitter):
 
                 event_to_fit.telescopes.append(telescope)
 
+            self.log.debug(f"Fit Analyst -- pyLIMA: Finished adding telescopes")
+
             self.log.debug(f"Fit Analyst -- pyLIMA: Survey to align data to: {survey_to_align:s}")
             event_to_fit.find_survey(survey_to_align)
             event_to_fit.check_event()
 
         return event_to_fit
+
+    def setup_model(self, event, model_type, blend, parallax, starting_params):
+        """
+         Simplified with the help of Claude.ai.
+
+        Set up a model with pyLIMA.model instance.
+
+        :param event: pyLIMA Event instance.
+        :type event: pyLIMA.Event
+
+        :param model_type: Which lens model to fit; "1S1L" (point source-point lens) or
+            "1S2L" (single source-binary lens).
+        :type model_type: str
+
+        :param blend: If `True` blending will be fitted for this event, if `False`, the model
+            will assume that all light is coming from the source.
+        :type blend: bool
+
+        :param parallax: If `True` microlensing parallax effect will be included in the model,
+            if `False` it will not.
+        :type parallax: bool
+
+        :param starting_params: A dictionary containing starting parameters.
+        :type starting_params: dict
+
+        :return model: A pyLIMA instance of model class used for fitting, plotting, etc.
+        :rtype model: pyLIMA.model
+        """
+        blend_param = "ftotal" if blend else "noblend"
+        parallax_arg = ["Full", int(starting_params["t0"])] if parallax else ["None", 0.0]
+
+        # Build the model -- this is the main thing that differs between 1S1L and 1S2L
+        if model_type == "1S1L":
+            self.log.info(
+                f"Fit Analyst -- pyLIMA: Fitting {'with' if parallax else 'without'} "
+                "microlensing parallax."
+            )
+            model = PSPL_model.PSPLmodel(event, parallax=parallax_arg, blend_flux_parameter=blend_param)
+        elif model_type == "1S2L":  # "1S2L"
+            self.log.info(
+                f"Fit Analyst -- pyLIMA: Fitting {'with' if parallax else 'without'} "
+                "microlensing parallax."
+            )
+            fancy = pyLIMA_fancy_parameters.StandardFancyParameters()
+            model = USBL_model.USBLmodel(
+                event, fancy_parameters=fancy, parallax=parallax_arg, blend_flux_parameter=blend_param
+            )
+        elif model_type == "2S1L":
+            model = PSPL_model.PSPLmodel(event, double_source=['Static', int(starting_params["t0"])],
+                                         parallax=parallax_arg, blend_flux_parameter=blend_param
+                                         )
+        else:
+            raise Exception(f"Unknown model type: {model_type!r}.")
+
+        return model
 
     def fit_model(
         self,
@@ -116,7 +173,7 @@ class FitPylima(Fitter):
         Simplified with the help of Claude.ai.
 
         Perform a single or binary source, and single or binary lens model fit with
-        `pyLIMA` package. Note: binary source-binary lens model is not supported.
+        `pyLIMA` package.
 
         :param fit_name: A label, but in fact a path to which the plot with
             the best-fitting model will be saved.
@@ -169,31 +226,7 @@ class FitPylima(Fitter):
             event_name = fit_name
             ra, dec = float(starting_params["ra"]), float(starting_params["dec"])
             event = self.setup_event(event_name, ra, dec, light_curves)
-
-            blend_param = "ftotal" if blend else "noblend"
-            parallax_arg = ["Full", int(starting_params["t0"])] if parallax else ["None", 0.0]
-
-            # Build the model -- this is the main thing that differs between 1S1L and 1S2L
-            if model_type == "1S1L":
-                self.log.info(
-                    f"Fit Analyst -- pyLIMA: Fitting {'with' if parallax else 'without'} "
-                    "microlensing parallax."
-                )
-                model = PSPL_model.PSPLmodel(event, parallax=parallax_arg, blend_flux_parameter=blend_param)
-            elif model_type == "1S2L":  # "1S2L"
-                self.log.info(
-                    f"Fit Analyst -- pyLIMA: Fitting {'with' if parallax else 'without'} "
-                    "microlensing parallax."
-                )
-                fancy = pyLIMA_fancy_parameters.StandardFancyParameters()
-                model = USBL_model.USBLmodel(
-                    event, fancy_parameters=fancy, parallax=parallax_arg, blend_flux_parameter=blend_param
-                )
-            elif model_type == "2S1L":
-                model = PSPL_model.PSPLmodel(event, double_source=['Static', int(starting_params["t0"])],
-                                             parallax=parallax_arg, blend_flux_parameter=blend_param)
-            else:
-                raise Exception(f"Unknown model type: {model_type!r}.")
+            model = self.setup_model(event, model_type, blend, parallax, starting_params)
 
             DE_population, loss_function = None, None
             for key, value in kwargs.items():
@@ -582,7 +615,43 @@ class FitPylima(Fitter):
 
         return aligned_data, residuals
 
-    def get_best_model_residuals(self, model_tag,
+    def get_model_params(self, event, model_tag,model_parameters,):
+        """
+        Set up event and model for which we know the parameters.
+
+        :param event: pyLIMA Event object.
+        :type event: pyLIMA.Event
+
+        :param model_tag: Model type.
+        :type model_tag: str
+
+        :param model_parameters: Parameters of a microlensing model.
+        :type model_parameters: dict
+
+        :return: A dictionary with light curve tags and corresponding residuals of the best-fitting model.
+        :rtype: dict
+        """
+
+        model_keys = {
+            "1S1L": ["t0", "u0", "tE", "rho", "piEN", "piEE", "t0_par"],
+            "1S2L": ["t0", "u0", "log_tE", "log_rho", "log_separation", "log_mass_ratio", "alpha", "piEN", "piEE", "t0_par"],
+        }
+        possible_keys = model_keys[model_tag]
+        for tel in event.telescopes:
+            lc_tag = tel.name
+            possible_keys.append(f"fsource_{lc_tag}")
+            possible_keys.append(f"ftotal_{lc_tag}")
+
+        event_parameters = {}
+        for par in possible_keys:
+            if par in model_parameters:
+                if "err" not in par:
+                    if "mag" not in par:
+                        event_parameters[par] = model_parameters[par]
+
+        return event_parameters
+
+    def get_best_model_residuals(self, model_label,
                      ra, dec,
                      model_parameters,
                      light_curves
@@ -590,9 +659,8 @@ class FitPylima(Fitter):
         """
         Returns residuals of the best-fitting model.
 
-        :param model_tag: Model type (`PSPL` for point lens-point source or `USBL`
-            for binary lens-uniform source).
-        :type model_tag: str
+        :param model_label: Label of the model.
+        :type model_label: str
 
         :param ra: Right Ascension in degrees.
         :type ra: float
@@ -610,42 +678,130 @@ class FitPylima(Fitter):
         :return: A dictionary with light curve tags and corresponding residuals of the best-fitting model.
         :rtype: dict
         """
-
         # Setup event
         ra, dec = ra, dec
+        model_tag = model_label.split("_")[0]
         event = self.setup_event(model_tag, ra, dec, light_curves)
 
-        model_keys = {
-            '1S1L': ["t0", "u0", "tE", "rho", "piEN", "piEE"],
-            '1S2L': ["t0", "u0", "log_tE", "log_rho", "log_separation", "log_mass_ratio", "alpha", "piEN", "piEE"],
-        }
-        possible_keys = model_keys[model_tag]
-        for tel in event.telescopes:
-            lc_tag = tel.name
-            possible_keys.append(f"fsource_{lc_tag}")
-            possible_keys.append(f"ftotal_{lc_tag}")
+        event_parameters = self.get_model_params(event, model_tag, model_parameters)
+        blend = False if "no_blend" in model_label else True
+        parallax = False if "no_piE" in model_label else True
 
-        event_parameters = []
-        event_keys = []
-        for par in possible_keys:
-            if par in model_parameters:
-                if "err" not in par:
-                    if "mag" not in par:
-                        event_parameters.append(model_parameters[par])
-                        event_keys.append(par)
-
-        if model_tag == "1S1L":
-            if "piEN" in event_keys:
-                model = PSPL_model.PSPLmodel(
-                    event, parallax=["Full", int(model_parameters["t0_par"])],
-                    blend_flux_parameter="ftotal"
-                )
-            else:
-                model = PSPL_model.PSPLmodel(event, parallax=["None", 0.0], blend_flux_parameter="ftotal")
+        model = self.setup_model(event, model_tag, blend, parallax, event_parameters)
 
         norm_data, residuals = self.get_aligned_data(model, event_parameters, format_res=True)
 
         return residuals
+
+    def redo_stats_and_plots(self,
+                             model_label,
+                             ra, dec,
+                             model_parameters,
+                             light_curves
+                             ):
+        """
+        Recalculates fit statistics and redoes plots with new light curves.
+
+        :param model_label: Label of the model.
+        :type model_label: str
+
+        :param ra: Right Ascension in degrees.
+        :type ra: float
+
+        :param dec: Declination in degrees.
+        :type dec: float
+
+        :param model_parameters: Parameters of best-fitting model.
+        :type model_parameters: dict
+
+        :param light_curves: A list of dictionaries with event name, light curve, survey name, filter name,
+            and, if available, an ephemeris of the space observatory which was used to obtain the observations.
+        :type light_curves: list
+        """
+
+        # Setup event
+        ra, dec = ra, dec
+        model_tag = model_label.split("_")[0]
+        event = self.setup_event(model_tag, ra, dec, light_curves)
+
+        event_parameters = self.get_model_params(event, model_tag, model_parameters)
+        blend = False if "no_blend" in model_label else True
+        parallax = False if "no_piE" in model_label else True
+
+        model = self.setup_model(event, model_tag, blend, parallax, event_parameters)
+        generic_fit = ML_fit.MLfit(model, loss_function='chi2')
+        model_dict = model.model_dictionnary
+        parameters = []
+        for par in model_dict:
+            parameters.append(event_parameters[par])
+        pylima_parameters = model.compute_pyLIMA_parameters(parameters)
+        generic_fit.fit_results['best_model'] = parameters
+
+        print("=============================")
+        print("pylima_parameters")
+        print(type(pylima_parameters))
+        print(pylima_parameters)
+
+        print("-------------------")
+        print("parameters")
+        print(type(parameters))
+        print(parameters)
+
+        plots_pylima.plot_pylima(event, generic_fit, self.log)
+
+        chi2 = generic_fit.model_chi2(pylima_parameters)
+        model_parameters["chi2"] = np.around(chi2, 3)
+
+        n_parameters = len(pylima_parameters)
+        ndata = 0
+        for tel in event.telescopes:
+            ndata += len(tel.lightcurve["mag"])
+
+        # Calculate the reduced chi2
+        model_parameters["red_chi2"] = np.around(
+            model_parameters["chi2"] / float(ndata - n_parameters), 3
+        )
+
+        # Calculate fit statistics
+        try:
+            res = generic_fit.model_residuals(pylima_parameters)
+            sw_test = stats.normal_Shapiro_Wilk(
+                np.ravel(res[0]["photometry"][0]) / np.ravel(res[1]["photometry"][0])
+            )
+            model_parameters["sw_test"] = np.around(sw_test[0], 3)
+            model_parameters["sw_test_result"] = sw_test[2]
+
+            ad_test = stats.normal_Anderson_Darling(
+                np.ravel(res[0]["photometry"][0]) / np.ravel(res[1]["photometry"][0])
+            )
+            model_parameters["ad_test"] = np.around(ad_test[0], 3)
+            model_parameters["ad_test_result"] = ad_test[2]
+
+            ks_test = stats.normal_Kolmogorov_Smirnov(
+                np.ravel(res[0]["photometry"][0]) / np.ravel(res[1]["photometry"][0])
+            )
+            model_parameters["ks_test"] = np.around(ks_test[0], 3)
+            model_parameters["ks_test_result"] = ks_test[2]
+
+            aic_test = stats.Akaike_Information_Criterion(model_parameters["chi2"], n_parameters)
+            model_parameters["aic_test"] = np.around(aic_test, 3)
+
+            bic_test = stats.Bayesian_Information_Criterion(model_parameters["chi2"], ndata, n_parameters)
+            model_parameters["bic_test"] = np.around(bic_test, 3)
+
+        except Exception as err:
+            self.log.error(f"Fit Analyst: {err}, {type(err)}")
+
+            model_parameters["sw_test"] = np.nan
+            model_parameters["sw_test_result"] = np.nan
+            model_parameters["ad_test"] = np.nan
+            model_parameters["ad_test_result"] = np.nan
+            model_parameters["ks_test"] = np.nan
+            model_parameters["ks_test_result"] = np.nan
+            model_parameters["aic_test"] = np.nan
+            model_parameters["bic_test"] = np.nan
+
+        return model_parameters
 
 
 
@@ -740,37 +896,6 @@ def return_blend_mag(mag_source, err_mag_source, mag_base, err_mag_base, log):
 
     return blend_mag, err_blend_mag
 
-# class SimPylima(Fitter):
-#     """
-#     Class to simulate a pylima model and get residuals of the light curve for that model.
-#     """
-#
-#     def __init__(self, log):
-#         super().__init__(log)
-#
-#     def set_up_simulator(self, model_tag,
-#                          ra, dec,
-#                          model_parameters,
-#                          light_curves
-#                          ):
-#         """
-#         Sets up the pylima simulator.
-#         """
-#
-#
-#
-#         sim_event = event.Event(ra=ra, dec=dec)
-#         for entry in light_curves:
-#             lc_tag = f"{entry["survey"]}_{entry["band"]}"
-#             lc_tags.append(lc_tag)
-#
-#             lc = np.array(entry["light_curve"])
-#             time_grid = lc[:,0]
-#
-#             sim_tel = simulator.simulate_a_telescope(name=lc_tag,                                                  location='Earth',
-#                                                    timestamps=time_grid,
-#                                                    astrometry=False
-#                                                    )
 
 
 

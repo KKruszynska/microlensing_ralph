@@ -624,14 +624,13 @@ class FitAnalyst(BaseAnalyst):
         if af_method == 'hampel':
             # Perform anomaly finding using the Hampel filter
             best_model = self.best_results[self.best_model]
-            model_tag = self.best_model.split("_")[0]
             # find residuals of best model
             if af_fit_package is not None:
                 self.log.info(f"Fit Analyst: Using fitting setup specified by the User: {af_fit_package}.")
                 if af_fit_package == "pyLIMA":
                     fit = pylima.fit_pylima.FitPylima(self.log)
                     residuals = fit.get_best_model_residuals(
-                        model_tag,
+                        best_model,
                         self.config["ra"], self.config["dec"],
                         best_model,
                         self.light_curves)
@@ -680,11 +679,6 @@ class FitAnalyst(BaseAnalyst):
             anomaly_found = self.evaluate_outliers_and_anomalies()
             return anomaly_found
 
-    def fit_1s1l_finite(self):
-        """
-        Fit single lens single source model with finite source effect.
-        """
-
     def add_anomalous_points(self):
         """
         Adds back points that were found to be outliers occurring during
@@ -709,6 +703,44 @@ class FitAnalyst(BaseAnalyst):
                 entry["light_curve"] = lc[~is_outlier]
                 n_returned_pts = len(entry["light_curve"]) - old_lc_len
                 self.log.debug(f"Fit Analyst: Added back {n_returned_pts} outliers which may form an anomaly.")
+
+    def redo_plots_and_stats(self, stage, fitting_package):
+        """
+        Function that redoes plots from the previous stage, if the anomaly was found and anomalous points were
+        added back to the light curves.
+
+        :param stage: Label of the anomaly finder stage.
+        :type stage: str
+        """
+
+        if stage == "multiple":
+            model_types = ["1S2L", "2S1L"]
+        elif stage == "single":
+            model_types = ["1S1L", "1FS1L"]
+
+        for model in self.best_results:
+            for model_type in model_types:
+                if model_type in model:
+                    if fitting_package == "pylima":
+                        results = self.best_results[model]
+                        redo_event = pylima.fit_pylima.FitPylima(self.log)
+                        updated_results = redo_event.redo_stats_and_plots(
+                            model_type,
+                            self.config["ra"], self.config["dec"],
+                            results,
+                            self.light_curves
+                        )
+                        self.best_results[model] = updated_results
+
+
+
+
+    def fit_1s1l_finite(self):
+        """
+        Fit single lens single source model with finite source effect.
+        """
+
+
 
     def fit_1s2l_finished(self, start_params=None):
         """
@@ -946,6 +978,8 @@ class FitAnalyst(BaseAnalyst):
                 anomaly_found = self.perform_anomaly_finding("single_ongoing")
                 if anomaly_found:
                     self.log.debug(f"Anomaly found. Pass relevant information to somewhere.")
+                    self.add_anomalous_points()
+                    # create plots with anomalous points and recalculate chi2
 
         else:
             self.log.info("Fit Analyst: Performing a finished event fit.")
@@ -957,6 +991,7 @@ class FitAnalyst(BaseAnalyst):
                 if anomaly_found:
                     self.log.debug(f"Fit Analyst: Multiple source and multiple lens fit will be performed.")
                     self.add_anomalous_points()
+                    # create plots with anomalous points and recalculate chi2
                     self.fit_1s2l_finished()
                     # self.fit_1s2l_finished()
                     self.best_model = self.evaluate_models()

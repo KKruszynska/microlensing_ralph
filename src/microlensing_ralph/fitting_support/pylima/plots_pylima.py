@@ -58,7 +58,7 @@ def plot_pylima(event, fit, log):
     for tel in event.telescopes:
         tel_names.append(tel.name)
 
-    log.info("Fit Analyst: Plots: grabbing colours and markers.")
+    log.info("Fit Analyst: Plots -- grabbing colours and markers.")
     color_dict, marker_dict = define_plotting_dictionaries(tel_names)
 
     custom_color = []

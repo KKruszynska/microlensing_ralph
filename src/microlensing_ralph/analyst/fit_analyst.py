@@ -630,7 +630,7 @@ class FitAnalyst(BaseAnalyst):
                 if af_fit_package == "pyLIMA":
                     fit = pylima.fit_pylima.FitPylima(self.log)
                     residuals = fit.get_best_model_residuals(
-                        best_model,
+                        self.best_model,
                         self.config["ra"], self.config["dec"],
                         best_model,
                         self.light_curves)
@@ -759,9 +759,9 @@ class FitAnalyst(BaseAnalyst):
         chi2_blend = self.best_results["1S1L_blend_no_piE"].get("chi2", np.inf)
 
         if chi2_blend > chi2_no_blend:
-            model_for_start = "1S1L_no_blend_no_piE"
+            start_model = "1S1L_no_blend_no_piE"
         else:
-            model_for_start = "1S1L_blend_no_piE"
+            start_model = "1S1L_blend_no_piE"
 
         fit_config = self.config["model_fit_configuration"].get("1S2L", None)
         if fit_config is not None:
@@ -770,25 +770,24 @@ class FitAnalyst(BaseAnalyst):
         else:
             fitting_package = "pyLIMA"
 
-        start_model = self.best_results[model_for_start]
-        model_tag = "1S1L"
-
+        start_model_params = self.best_results[ start_model]
         residuals = None
+
         if fitting_package.lower() == "pylima":
             fit = pylima.fit_pylima.FitPylima(self.log)
             residuals = fit.get_best_model_residuals(
-                model_tag,
-                self.config["ra"], self.config["dec"],
                 start_model,
+                self.config["ra"], self.config["dec"],
+                start_model_params,
                 self.light_curves
             )
 
         if residuals is not None:
             anomaly_info = analyst_tools.get_anomaly_information(self.candidate_anomaly_seqs, residuals)
             binary_start_params = analyst_tools.get_binary_starting_params(
-                self.best_results[model_for_start].get("t0"),
-                self.best_results[model_for_start].get("u0"),
-                self.best_results[model_for_start].get("tE"),
+                self.best_results[start_model].get("t0"),
+                self.best_results[start_model].get("u0"),
+                self.best_results[start_model].get("tE"),
                 anomaly_info["t_anomaly"],
                 anomaly_info["duration_anomaly"],
                 anomaly_info["ampl_anomaly"]
@@ -797,9 +796,9 @@ class FitAnalyst(BaseAnalyst):
         starting_params = {
             "ra": self.config["ra"],
             "dec": self.config["dec"],
-            "t0": self.best_results[model_for_start].get("t0"),
-            "u0": self.best_results[model_for_start].get("u0"),
-            "log_tE": np.log10(self.best_results[model_for_start].get("tE")),
+            "t0": self.best_results[start_model].get("t0"),
+            "u0": self.best_results[start_model].get("u0"),
+            "log_tE": np.log10(self.best_results[start_model].get("tE")),
             "log_rho": binary_start_params["log_rho"],
             "log_separation": binary_start_params["log_separation"],
             "log_mass_ratio": binary_start_params["log_mass_ratio"],
@@ -842,8 +841,8 @@ class FitAnalyst(BaseAnalyst):
 
             if "no_piE" not in fit_label:
                 if self.best_results.get("1S2L_no_blend_piE") is not None:
-                    starting_params["piEN"] = self.best_results["1S2L_no_blend_piE"].get("piEN")
-                    starting_params["piEE"] = self.best_results["1S2L_no_blend_piE"].get("piEE")
+                    starting_params["piEN"] = self.best_results["1S2L_no_blend_piE"].get("piEN", 0.0)
+                    starting_params["piEE"] = self.best_results["1S2L_no_blend_piE"].get("piEE", 0.0)
                 else:
                     starting_params["piEN"] = 0.0
                     starting_params["piEE"] = 0.0

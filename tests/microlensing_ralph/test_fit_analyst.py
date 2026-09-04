@@ -864,7 +864,7 @@ class FitAnalystTest:
 
         path_outputs, config, light_curves = self.setup()
 
-        log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], stream=False)
+        log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], to_stream=False)
         analyst = FitAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
         status, t0 = analyst.perform_ongoing_check()
         logs.close_log(log)
@@ -881,7 +881,7 @@ class FitAnalystTest:
 
         path_outputs, config, light_curves = self.setup()
 
-        log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], stream=False)
+        log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], to_stream=False)
         analyst = FitAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
         result = analyst.perform_fit()
 
@@ -907,7 +907,7 @@ class FitAnalystTest:
 
         path_outputs, config, light_curves = self.setup()
 
-        log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], stream=False)
+        log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], to_stream=False)
         analyst = FitAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
         result = analyst.perform_fit()
 
@@ -1032,49 +1032,49 @@ def test_run():
     test.test_parse_config()
     test.test_1s2l_fit()
 
-    # for case in [scenario_gaia, scenario_gsa]:
-    #     test = FitAnalystTest(case)
-    #     test.test_parse_config()
-    #     test.test_check_ongoing()
-    #     if case.get("event_name") == "GDR3_ULENS_025":
-    #         test.test_fit()
-    #
-    # scenario_best_only = scenario_gaia.copy()
-    # scenario_best_only["fit_analyst"]["return_all_models"] = False
-    # scenario_best_only["fit_result"] = None
-    # scenario_best_only["best_model_key"] = "1S1L_blend_piE_n"
-    #
-    # test = FitAnalystTest(scenario_best_only)
-    # test.test_return_best_only()
-    #
-    # for case in [scenario_gaia, scenario_gsa, scenario_best_only]:
-    #     analyst_path = case.get("analyst_path")
-    #     event_name = case.get("event_name")
-    #
-    #     fpath = os.path.join(analyst_path, "fit_results.json")
-    #     output = Path(fpath)
-    #     if output.exists():
-    #         os.remove(output)
-    #
-    #     fpath = os.path.join(analyst_path, "fit_stats.txt")
-    #     output = Path(fpath)
-    #     if output.exists():
-    #         os.remove(output)
-    #
-    #     fpath = os.path.join(analyst_path, event_name + "_analyst.log")
-    #     output = Path(fpath)
-    #     if output.exists():
-    #         os.remove(output)
-    #
-    #     files = [
-    #         "1S1L_no_blend_no_piE.html",
-    #         "1S1L_blend_no_piE.html",
-    #         "1S1L_blend_piE.html",
-    #         "1S1L_blend_piE_p.html",
-    #         "1S1L_blend_piE_n.html",
-    #     ]
-    #     for element in files:
-    #         fpath = os.path.join(analyst_path, element)
-    #         output = Path(fpath)
-    #         if output.exists():
-    #             os.remove(output)
+    for case in [scenario_gaia, scenario_gsa]:
+        test = FitAnalystTest(case)
+        test.test_parse_config()
+        test.test_check_ongoing()
+        if case.get("event_name") == "GDR3_ULENS_025":
+            test.test_fit()
+
+    scenario_best_only = scenario_gaia.copy()
+    scenario_best_only["fit_analyst"]["return_all_models"] = False
+    scenario_best_only["fit_result"] = None
+    scenario_best_only["best_model_key"] = "1S1L_blend_piE_n"
+
+    test = FitAnalystTest(scenario_best_only)
+    test.test_return_best_only()
+
+    for case in [scenario_gaia, scenario_gsa, scenario_best_only]:
+        analyst_path = case.get("analyst_path")
+        event_name = case.get("event_name")
+
+        fpath = os.path.join(analyst_path, "fit_results.json")
+        output = Path(fpath)
+        if output.exists():
+            os.remove(output)
+
+        fpath = os.path.join(analyst_path, "fit_stats.txt")
+        output = Path(fpath)
+        if output.exists():
+            os.remove(output)
+
+        fpath = os.path.join(analyst_path, event_name + "_analyst.log")
+        output = Path(fpath)
+        if output.exists():
+            os.remove(output)
+
+        files = [
+            "1S1L_no_blend_no_piE.html",
+            "1S1L_blend_no_piE.html",
+            "1S1L_blend_piE.html",
+            "1S1L_blend_piE_p.html",
+            "1S1L_blend_piE_n.html",
+        ]
+        for element in files:
+            fpath = os.path.join(analyst_path, element)
+            output = Path(fpath)
+            if output.exists():
+                os.remove(output)

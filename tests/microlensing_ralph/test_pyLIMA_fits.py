@@ -45,7 +45,7 @@ scenario_roman = {
     "event_name": "ulwdc1_040",
     "ra": 267.715,
     "dec": -28.3235,
-    "analyst_path": os.path.join(ralph_output, "fit_analyst"),
+    "analyst_path": os.path.join(ralph_output, "pyLIMA"),
     "light_curves": [
         {
             "survey": "Roman",
@@ -164,7 +164,8 @@ class TestPylima:
             "tE": 40.0,
         }
 
-        params = fit_pspl.fit_pspl("PSPL_no_piE", self.light_curves, starting_params, False, True)
+        fit_name = os.path.join(ralph_output, "pyLIMA", "1S1L_no_piE")
+        params = fit_pspl.fit_model(fit_name, self.light_curves, starting_params, False, True)
 
         log.info("Fitting finished.")
         log.debug(
@@ -198,7 +199,8 @@ class TestPylima:
             "piEE": 0.0,
         }
 
-        params = fit_pspl.fit_pspl("PSPL_piE", self.light_curves, starting_params, True, True)
+        fit_name = os.path.join(ralph_output, "pyLIMA", "1S1L_piE")
+        params = fit_pspl.fit_model(fit_name, self.light_curves, starting_params, True, True)
 
         log.info("Fitting finished.")
         log.debug(
@@ -231,13 +233,15 @@ class TestPylima:
         if self.model_params is not None:
             for model_label in self.model_params["best_results"]:
                 parameters = self.model_params["best_results"].get(model_label)
-                updated_params = fit_model.redo_stats_and_plots(model_label,
-                                     self.ra, self.dec,
-                                     parameters,
-                                     self.light_curves
-                                     )
-                print("=====================")
-                print(updated_params)
+                model_name = os.path.join(ralph_output, "pyLIMA", model_label)
+                updated_params = fit_model.redo_stats_and_plots(
+                    model_name,
+                    self.ra, self.dec,
+                    parameters,
+                    self.light_curves
+                )
+
+                assert pytest.approx(updated_params["chi2"], abs=1.0) == 42560
 
         logs.close_log(log)
 
@@ -247,18 +251,28 @@ def test_run():
     Run pylima fitting tests.
     """
 
-    # test = TestPylima(scenario)
-    # test.test_create_event()
-    # test.test_fit_pspl()
-    # test.test_fit_parallax()
+    test = TestPylima(scenario)
+    test.test_create_event()
+    test.test_fit_pspl()
+    test.test_fit_parallax()
     test_roman = TestPylima(scenario_roman, model_params=model_roman)
     test_roman.test_redo_stats_and_plots()
 
-    # analyst_path = os.path.join(ralph_output, "pyLIMA" )
-    # event_names = ["test_pyLIMA_fits_pie", "test_pylima_fits_event", "test_pylima_fits_pspl"]
-    #
-    # for event in event_names:
-    #     fpath = os.path.join(analyst_path, event + "_analyst.log")
-    #     output = Path(fpath)
-    #     if output.exists():
-    #         os.remove(output)
+    analyst_path = os.path.join(ralph_output, "pyLIMA" )
+    event_names = [
+        "test_pyLIMA_fits_pie", "test_pylima_fits_event",
+        "test_pylima_fits_pspl", "ulwdc1_040"
+    ]
+
+    for event in event_names:
+        fpath = os.path.join(analyst_path, event + "_analyst.log")
+        output = Path(fpath)
+        if output.exists():
+            os.remove(output)
+
+    plots = ["1S1L_no_piE", "1S1L_piE"]
+    for plot in plots:
+        fpath = os.path.join(analyst_path, f"{plot}.html")
+        output = Path(fpath)
+        if output.exists():
+            os.remove(output)

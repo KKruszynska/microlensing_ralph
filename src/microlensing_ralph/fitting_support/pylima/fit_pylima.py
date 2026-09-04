@@ -1,15 +1,18 @@
+import types
+from pathlib import Path
+
 import numpy as np
-from pyLIMA import event, telescopes, toolbox
-from pyLIMA.fits import ML_fit, DE_fit, TRF_fit, stats
+from pyLIMA import event, telescopes
+from pyLIMA.fits import DE_fit, ML_fit, TRF_fit, stats
 from pyLIMA.fits.objective_functions import photometric_residuals_in_magnitude
 from pyLIMA.models import PSPL_model, USBL_model, pyLIMA_fancy_parameters
 from pyLIMA.outputs.pyLIMA_plots import create_telescopes_to_plot_model
-from pyLIMA.simulations import simulator
+from pyLIMA.toolbox import brightness_transformation as pbt
 
 from microlensing_ralph.fitting_support.fitter import Fitter
 from microlensing_ralph.fitting_support.pylima import plots_pylima
-
 from microlensing_ralph.toolbox.logs import capture_prints
+
 
 class FitPylima(Fitter):
     """
@@ -23,6 +26,8 @@ class FitPylima(Fitter):
 
     def __init__(self, log):
         super().__init__(log)
+        self.sample_label = None
+        self.samples = None
 
     def setup_event(self, event_name, ra, dec, light_curves):
         """
@@ -93,7 +98,7 @@ class FitPylima(Fitter):
 
                 event_to_fit.telescopes.append(telescope)
 
-            self.log.debug(f"Fit Analyst -- pyLIMA: Finished adding telescopes")
+            self.log.debug("Fit Analyst -- pyLIMA: Finished adding telescopes")
 
             self.log.debug(f"Fit Analyst -- pyLIMA: Survey to align data to: {survey_to_align:s}")
             event_to_fit.find_survey(survey_to_align)
@@ -322,7 +327,13 @@ class FitPylima(Fitter):
             model_parameters = self.gather_parameters(event, fit_event, fitting_method=fitting_method)
 
             # Produce fit outputs here
+            # Create plots
             plots_pylima.plot_pylima(event, fit_event, self.log)
+            # Save posteriors
+            if fitting_method == "DE":
+                np.savez(f"{fit_name}_DE_samples.npz", samples=fit_event.fit_results["DE_population"])
+            elif fitting_method == "TRF":
+                np.savez(f"{fit_name}_TRF_samples.npz", samples=fit_event.samples_to_plot())
 
             if return_norm_lc:
                 norm_lc, residuals = self.get_aligned_data(model, fit_event.fit_results["best_model"])
@@ -378,10 +389,10 @@ class FitPylima(Fitter):
                 # Save fluxes transformed to magnitudes
                 if any(x in key for x in ["fsource", "fblend", "ftotal"]):
                     model_params[key + "_mag"] = np.around(
-                        toolbox.brightness_transformation.flux_to_magnitude(median), 3
+                        pbt.flux_to_magnitude(median), 3
                     )
                     model_params[key + "_mag_error"] = np.around(
-                        toolbox.brightness_transformation.error_flux_to_error_magnitude(
+                        pbt.error_flux_to_error_magnitude(
                             np.sqrt(np.sqrt(err_pl**2 + err_mn**2)),
                             median,
                         ),
@@ -396,13 +407,13 @@ class FitPylima(Fitter):
                 # Save fluxes transformed to magnitudes
                 if any(x in key for x in ["fsource", "fblend", "ftotal"]):
                     model_params[key + "_mag"] = np.around(
-                        toolbox.brightness_transformation.flux_to_magnitude(
+                        pbt.flux_to_magnitude(
                             model_fit.fit_results["best_model"][i]
                         ),
                         3,
                     )
                     model_params[key + "_mag_error"] = np.around(
-                        toolbox.brightness_transformation.error_flux_to_error_magnitude(
+                        pbt.error_flux_to_error_magnitude(
                             np.sqrt(model_fit.fit_results["covariance_matrix"][i, i]),
                             model_fit.fit_results["best_model"][i],
                         ),
@@ -422,7 +433,6 @@ class FitPylima(Fitter):
                 tel_0 = tel.name
 
             if f"fblend_{tel.name}" in model_params:
-                return_baseline_mag
                 model_params["ftotal_" + tel.name] = (
                     model_params["fsource_" + tel.name] + model_params["fblend_" + tel.name]
                 )
@@ -432,11 +442,11 @@ class FitPylima(Fitter):
                 )
 
                 model_params["ftotal_" + tel.name + "_mag"] = np.around(
-                    toolbox.brightness_transformation.flux_to_magnitude(model_params["ftotal_" + tel.name]), 3
+                    pbt.flux_to_magnitude(model_params["ftotal_" + tel.name]), 3
                 )
 
                 model_params["ftotal_" + tel.name + "_mag_error"] = np.around(
-                    toolbox.brightness_transformation.error_flux_to_error_magnitude(
+                    pbt.error_flux_to_error_magnitude(
                         model_params["ftotal_" + tel.name + "_error"], model_params["ftotal_" + tel.name]
                     ),
                     3,
@@ -453,11 +463,11 @@ class FitPylima(Fitter):
                 )
 
                 model_params["fblend_" + tel.name + "_mag"] = np.around(
-                    toolbox.brightness_transformation.flux_to_magnitude(model_params["fblend_" + tel.name]), 3
+                    pbt.flux_to_magnitude(model_params["fblend_" + tel.name]), 3
                 )
 
                 model_params["fblend_" + tel.name + "_mag_error"] = np.around(
-                    toolbox.brightness_transformation.error_flux_to_error_magnitude(
+                    pbt.error_flux_to_error_magnitude(
                         model_params["fblend_" + tel.name + "_error"], model_params["fblend_" + tel.name]
                     ),
                     3,
@@ -530,8 +540,8 @@ class FitPylima(Fitter):
         :param model: A pyLIMA model instance.
         :type model: pyLIMA.model
 
-        :param parameters: A dictionary with parameters of a pyLIMA model.
-        :type parameters: dict
+        :param parameters: A list with parameters of a pyLIMA model.
+        :type parameters: list
 
         :param format_res: If `True`, instead of returning a list of numpy arrays,
             residuals will be returned as a dictionary with tags of light curves,
@@ -590,10 +600,11 @@ class FitPylima(Fitter):
                         list_of_telescopes[ref_index].lightcurve["time"].value == time)[0][0]
                     time_mask.append(time_index)
 
-                model_flux = (reference_source * ref_magnification[ref_index][time_mask]
-                              + reference_blend
-                              )
-                magnitude = toolbox.brightness_transformation.flux_to_magnitude(model_flux)
+                model_flux = (
+                        reference_source * ref_magnification[ref_index][time_mask]
+                        + reference_blend
+                )
+                magnitude = pbt.flux_to_magnitude(model_flux)
 
                 aligned_magnitude = np.array(
                     [
@@ -617,19 +628,19 @@ class FitPylima(Fitter):
 
     def get_model_params(self, event, model_tag,model_parameters,):
         """
-        Set up event and model for which we know the parameters.
+        Organize model parameters into a pyLIMA-friendly array.
 
-        :param event: pyLIMA Event object.
+        :param event: pyLIMA Event instance.
         :type event: pyLIMA.Event
-
+        
         :param model_tag: Model type.
         :type model_tag: str
 
         :param model_parameters: Parameters of a microlensing model.
         :type model_parameters: dict
 
-        :return: A dictionary with light curve tags and corresponding residuals of the best-fitting model.
-        :rtype: dict
+        :return: A list with parameters of a model organized for pyLIMA.
+        :rtype: list
         """
 
         model_keys = {
@@ -684,17 +695,21 @@ class FitPylima(Fitter):
         event = self.setup_event(model_tag, ra, dec, light_curves)
 
         event_parameters = self.get_model_params(event, model_tag, model_parameters)
-        blend = False if "no_blend" in model_label else True
-        parallax = False if "no_piE" in model_label else True
+        blend = "no_blend" not in model_label
+        parallax = "no_piE" not in model_label
 
         model = self.setup_model(event, model_tag, blend, parallax, event_parameters)
+        parameter_dict = model.model_dictionnary
 
-        norm_data, residuals = self.get_aligned_data(model, event_parameters, format_res=True)
+        pylima_parameters = []
+        for par in parameter_dict:
+            pylima_parameters.append(event_parameters[par])
+        norm_data, residuals = self.get_aligned_data(model, pylima_parameters, format_res=True)
 
         return residuals
 
     def redo_stats_and_plots(self,
-                             model_label,
+                             model_name,
                              ra, dec,
                              model_parameters,
                              light_curves
@@ -702,8 +717,8 @@ class FitPylima(Fitter):
         """
         Recalculates fit statistics and redoes plots with new light curves.
 
-        :param model_label: Label of the model.
-        :type model_label: str
+        :param model_name: Label of the model, but also the path for output files.
+        :type model_name: str
 
         :param ra: Right Ascension in degrees.
         :type ra: float
@@ -721,12 +736,13 @@ class FitPylima(Fitter):
 
         # Setup event
         ra, dec = ra, dec
+        model_label = model_name.split("/")[-1]
         model_tag = model_label.split("_")[0]
-        event = self.setup_event(model_tag, ra, dec, light_curves)
+        event = self.setup_event(model_label, ra, dec, light_curves)
 
         event_parameters = self.get_model_params(event, model_tag, model_parameters)
-        blend = False if "no_blend" in model_label else True
-        parallax = False if "no_piE" in model_label else True
+        blend = "no_blend" not in model_label
+        parallax = "no_piE" not in model_label
 
         model = self.setup_model(event, model_tag, blend, parallax, event_parameters)
         generic_fit = ML_fit.MLfit(model, loss_function='chi2')
@@ -735,21 +751,28 @@ class FitPylima(Fitter):
         for par in model_dict:
             parameters.append(event_parameters[par])
         pylima_parameters = model.compute_pyLIMA_parameters(parameters)
-        generic_fit.fit_results['best_model'] = parameters
+        generic_fit.fit_results['best_model'] = np.asarray(parameters)
 
-        print("=============================")
-        print("pylima_parameters")
-        print(type(pylima_parameters))
-        print(pylima_parameters)
+        potential_files = ["DE_samples", "TRF_samples"]
+        for file in potential_files:
+            path = f"{model_name}_{file}.npz"
+            output = Path(path)
+            if output.exists():
+                npz = np.load(path, allow_pickle=True)
+                self.samples = npz["samples"]
 
-        print("-------------------")
-        print("parameters")
-        print(type(parameters))
-        print(parameters)
+        if self.samples is None:
+            raise FileNotFoundError("File with posteriors not found! Model plot cannot be redone.")
 
-        plots_pylima.plot_pylima(event, generic_fit, self.log)
+        else:
+            def samples_to_plot(self):
+                return self.samples
 
-        chi2 = generic_fit.model_chi2(pylima_parameters)
+            generic_fit.samples = self.samples
+            generic_fit.samples_to_plot = types.MethodType(samples_to_plot, generic_fit)
+            plots_pylima.plot_pylima(event, generic_fit, self.log)
+
+        chi2 = generic_fit.model_chi2(pylima_parameters)[0]
         model_parameters["chi2"] = np.around(chi2, 3)
 
         n_parameters = len(pylima_parameters)
@@ -831,18 +854,18 @@ def return_baseline_mag(mag_source, err_mag_source, mag_blend, err_mag_blend, lo
     """
     base_mag, err_base_mag = None, None
 
-    flux_source = toolbox.brightness_transformation.magnitude_to_flux(mag_source)
-    err_fs = toolbox.brightness_transformation.error_magnitude_to_error_flux(err_mag_source, flux_source)
-    flux_blend = toolbox.brightness_transformation.magnitude_to_flux(mag_blend)
-    err_fb = toolbox.brightness_transformation.error_magnitude_to_error_flux(err_mag_blend, flux_blend)
+    flux_source = pbt.magnitude_to_flux(mag_source)
+    err_fs = pbt.error_magnitude_to_error_flux(err_mag_source, flux_source)
+    flux_blend = pbt.magnitude_to_flux(mag_blend)
+    err_fb = pbt.error_magnitude_to_error_flux(err_mag_blend, flux_blend)
 
     base_flux = flux_source + flux_blend
     err_f_base = np.sqrt(err_fs**2 + err_fb**2)
 
     try:
-        base_mag = toolbox.brightness_transformation.flux_to_magnitude(base_flux)
+        base_mag = pbt.flux_to_magnitude(base_flux)
         err_base_mag = (
-            toolbox.brightness_transformation.error_flux_to_error_magnitude(err_f_base, base_flux)
+            pbt.error_flux_to_error_magnitude(err_f_base, base_flux)
         )
     except Exception as err:
         log.error(f"Fit Analyst -- pyLIMA: {err}, {type(err)}")
@@ -874,33 +897,18 @@ def return_blend_mag(mag_source, err_mag_source, mag_base, err_mag_base, log):
     """
     blend_mag, err_blend_mag = None, None
 
-    flux_source = toolbox.brightness_transformation.magnitude_to_flux(mag_source)
-    err_fs = toolbox.brightness_transformation.error_magnitude_to_error_flux(
-        err_mag_source, flux_source
-    )
-    flux_baseline = toolbox.brightness_transformation.magnitude_to_flux(mag_base)
-    err_fbase = toolbox.brightness_transformation.error_magnitude_to_error_flux(
-        err_mag_base, flux_baseline
-    )
+    flux_source = pbt.magnitude_to_flux(mag_source)
+    err_fs = pbt.error_magnitude_to_error_flux(err_mag_source, flux_source)
+    flux_baseline = pbt.magnitude_to_flux(mag_base)
+    err_fbase = pbt.error_magnitude_to_error_flux(err_mag_base, flux_baseline)
 
     blend_flux = flux_baseline - flux_source
     err_f_blend = np.sqrt(err_fs**2 + err_fbase**2)
 
     try:
-        blend_mag = toolbox.brightness_transformation.flux_to_magnitude(blend_flux)
-        err_blend_mag = toolbox.brightness_transformation.error_flux_to_error_magnitude(
-            err_f_blend, blend_flux
-        )
+        blend_mag = pbt.flux_to_magnitude(blend_flux)
+        err_blend_mag = pbt.error_flux_to_error_magnitude(err_f_blend, blend_flux)
     except Exception as err:
         log.error(f"Fit Analyst -- pyLIMA: {err}, {type(err)}")
 
     return blend_mag, err_blend_mag
-
-
-
-
-
-
-
-
-

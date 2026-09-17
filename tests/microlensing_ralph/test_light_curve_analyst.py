@@ -200,8 +200,15 @@ class LightCurveAnalystTest:
 
         config, dictionary, path_outputs, light_curves = self.set_up()
 
-        log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], stream=True)
-        analyst = LightCurveAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
+        log = logs.start_log(
+            path_outputs, "debug",
+            event_name=config["event_name"],
+            to_stream=True, to_file=False
+        )
+        analyst = LightCurveAnalyst(
+            config["event_name"], path_outputs,
+            light_curves, log, config_dict=config
+        )
         upper_mag = analyst.config["acceptable_mag_range"]["upper_limit"]
         lower_mag = analyst.config["acceptable_mag_range"]["lower_limit"]
         mag_range_dict = analyst.config["acceptable_mag_range"]
@@ -221,8 +228,14 @@ class LightCurveAnalystTest:
 
         config, dictionary, path_outputs, light_curves = self.set_up()
 
-        log = logs.start_log(path_outputs, "debug", event_name=config["event_name"])
-        analyst = LightCurveAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
+        log = logs.start_log(
+            path_outputs, "debug",
+            event_name=config["event_name"]
+        )
+        analyst = LightCurveAnalyst(
+            config["event_name"], path_outputs, light_curves,
+            log, config_dict=config
+        )
         analyst.perform_quality_check()
         logs.close_log(log)
 
@@ -240,7 +253,10 @@ class LightCurveAnalystTest:
         config, dictionary, path_outputs, light_curves = self.set_up()
 
         log = logs.start_log(path_outputs, "debug", event_name=config["event_name"])
-        analyst = LightCurveAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
+        analyst = LightCurveAnalyst(
+            config["event_name"], path_outputs,
+            light_curves, log, config_dict=config
+        )
         analyst.perform_quality_check()
         analyst.perform_outlier_check()
 
@@ -303,8 +319,14 @@ class BadLightCurvesTest:
         light_curves = [dict]
         config["light_curves"] = light_curves
 
-        log = logs.start_log(path_outputs, "debug", event_name=config["event_name"], stream=True)
-        analyst = LightCurveAnalyst(config["event_name"], path_outputs, light_curves, log, config_dict=config)
+        log = logs.start_log(path_outputs, "debug",
+                             event_name=config["event_name"],
+                             to_stream=True, to_file=False
+                             )
+        analyst = LightCurveAnalyst(
+            config["event_name"], path_outputs,
+            light_curves, log, config_dict=config
+        )
         analyst.perform_quality_check()
 
         for entry in analyst.light_curves:

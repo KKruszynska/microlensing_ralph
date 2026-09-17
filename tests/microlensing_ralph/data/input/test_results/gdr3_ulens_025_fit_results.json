@@ -1,5 +1,5 @@
 {
-    "PSPL_no_blend_no_piE": {
+    "1S1L_no_blend_no_piE": {
         "t0_par": 0.0,
         "t0": 2457503.515,
         "t0_error": 35.285,
@@ -35,7 +35,7 @@
         "aic_test": 1408.054,
         "bic_test": 1431.001
     },
-    "PSPL_blend_no_piE": {
+    "1S1L_blend_no_piE": {
         "t0_par": 0.0,
         "t0": 2457499.765,
         "t0_error": 3.438,
@@ -105,7 +105,7 @@
         "aic_test": 1138.777,
         "bic_test": 1174.836
     },
-    "PSPL_blend_piE_p": {
+    "1S1L_blend_piE_p": {
         "t0_par": 2457499,
         "t0": 2457486.236,
         "t0_error": 0.979,
@@ -179,7 +179,7 @@
         "aic_test": 365.639,
         "bic_test": 408.254
     },
-    "PSPL_blend_piE_n": {
+    "1S1L_blend_piE_n": {
         "t0_par": 2457486,
         "t0": 2457488.956,
         "t0_error": 0.905,

@@ -713,9 +713,9 @@ class FitAnalyst(BaseAnalyst):
         :type stage: str
         """
 
-        if stage == "multiple":
+        if "multiple" in stage:
             model_types = ["1S2L", "2S1L"]
-        elif stage == "single":
+        elif "single" in stage:
             model_types = ["1S1L", "1FS1L"]
 
         for model in self.best_results:
@@ -731,9 +731,6 @@ class FitAnalyst(BaseAnalyst):
                             self.light_curves
                         )
                         self.best_results[model] = updated_results
-
-
-
 
     def fit_1s1l_finite(self):
         """
@@ -770,7 +767,7 @@ class FitAnalyst(BaseAnalyst):
         else:
             fitting_package = "pyLIMA"
 
-        start_model_params = self.best_results[ start_model]
+        start_model_params = self.best_results[start_model]
         residuals = None
 
         if fitting_package.lower() == "pylima":
@@ -815,34 +812,36 @@ class FitAnalyst(BaseAnalyst):
             for parameter in model_params:
                 starting_params[parameter] = start_params[parameter]
 
+        self.log.debug(f"Fit Analyst: Starting parameters: {starting_params}")
+
         self.log.info("Fit Analyst: Performing fit for 1S2L without blend and parallax.")
 
         results = self.fit_event(
-            "1S2L_no_blend_no_piE",
-            os.path.join(self.analyst_path, "1S2L_no_blend_no_piE"),
+            "1S2L_blend_no_piE",
+            os.path.join(self.analyst_path, "1S2L_blend_no_piE"),
             starting_params,
             False,
-            False,
+            True,
         )
-        self.best_results["1S2L_no_blend_no_piE"] = results
+        self.best_results["1S2L_blend_no_piE"] = results
         self.log.info("Fit Analyst: Finished fitting 1S2L without blend and parallax fit.")
 
-        for fit_label in ["1S2L_blend_no_piE", "1S2L_no_blend_piE", "1S2L_blend_piE"]:
+        for fit_label in ["1S2L_blend_piE", "1S2L_no_blend_piE", "1S2L_no_blend_no_piE"]:
             starting_params = {
                 "ra": self.config["ra"], "dec": self.config["dec"],
-                "t0": self.best_results["1S2L_no_blend_no_piE"].get("t0"),
-                "u0": self.best_results["1S2L_no_blend_no_piE"].get("u0"),
-                "log_tE": self.best_results["1S2L_no_blend_no_piE"].get("log_tE"),
-                "log_rho": self.best_results["1S2L_no_blend_no_piE"].get("log_rho"),
-                "log_separation": self.best_results["1S2L_no_blend_no_piE"].get("log_separation"),
-                "log_mass_ratio": self.best_results["1S2L_no_blend_no_piE"].get("log_mass_ratio"),
-                "alpha": self.best_results["1S2L_no_blend_no_piE"].get("alpha")
+                "t0": self.best_results["1S2L_blend_no_piE"].get("t0"),
+                "u0": self.best_results["1S2L_blend_no_piE"].get("u0"),
+                "log_tE": self.best_results["1S2L_blend_no_piE"].get("log_tE"),
+                "log_rho": self.best_results["1S2L_blend_no_piE"].get("log_rho"),
+                "log_separation": self.best_results["1S2L_blend_no_piE"].get("log_separation"),
+                "log_mass_ratio": self.best_results["1S2L_blend_no_piE"].get("log_mass_ratio"),
+                "alpha": self.best_results["1S2L_blend_no_piE"].get("alpha")
             }
 
             if "no_piE" not in fit_label:
-                if self.best_results.get("1S2L_no_blend_piE") is not None:
-                    starting_params["piEN"] = self.best_results["1S2L_no_blend_piE"].get("piEN", 0.0)
-                    starting_params["piEE"] = self.best_results["1S2L_no_blend_piE"].get("piEE", 0.0)
+                if self.best_results.get("1S2L_blend_piE") is not None:
+                    starting_params["piEN"] = self.best_results["1S2L_blend_piE"].get("piEN", 0.0)
+                    starting_params["piEE"] = self.best_results["1S2L_blend_piE"].get("piEE", 0.0)
                 else:
                     starting_params["piEN"] = 0.0
                     starting_params["piEE"] = 0.0
@@ -978,7 +977,12 @@ class FitAnalyst(BaseAnalyst):
                 if anomaly_found:
                     self.log.debug(f"Anomaly found. Pass relevant information to somewhere.")
                     self.add_anomalous_points()
-                    # create plots with anomalous points and recalculate chi2
+                    fit_config = self.config["model_fit_configuration"].get("1S1L_no_blend_no_piE")
+                    if fit_config is not None:
+                        fitting_package = fit_config.get("fitting_package")
+                    else:
+                        fitting_package = "pylima"
+                    self.redo_plots_and_stats("single_ongoing", fitting_package)
 
         else:
             self.log.info("Fit Analyst: Performing a finished event fit.")
@@ -990,7 +994,12 @@ class FitAnalyst(BaseAnalyst):
                 if anomaly_found:
                     self.log.debug(f"Fit Analyst: Multiple source and multiple lens fit will be performed.")
                     self.add_anomalous_points()
-                    # create plots with anomalous points and recalculate chi2
+                    fit_config = self.config["model_fit_configuration"].get("1S1L_no_blend_no_piE")
+                    if fit_config is not None:
+                        fitting_package = fit_config.get("fitting_package")
+                    else:
+                        fitting_package = "pylima"
+                    self.redo_plots_and_stats("single_finished", fitting_package)
                     self.fit_1s2l_finished()
                     # self.fit_1s2l_finished()
                     self.best_model = self.evaluate_models()

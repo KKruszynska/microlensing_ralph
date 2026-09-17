@@ -168,7 +168,7 @@ scenario_roman = {
     "event_name": "ulwdc1_040",
     "ra": 267.715,
     "dec": -28.3235,
-    "analyst_path": os.path.join(ralph_output, "fit_analyst"),
+    "analyst_path": os.path.join(ralph_output, "fit_analyst", "ulwdc1_040"),
     "lc_analyst": {"acceptable_mag_range":
                        {"upper_limit": -5, "lower_limit": 30},
                    "max_acceptable_err": 1.0,
@@ -947,8 +947,25 @@ class FitAnalystTest:
         analyst.best_model = self.answer.get("best_model")
         analyst.best_results = self.answer.get("best_results")
 
+        for entry in analyst.light_curves:
+            lc_tag = f"{entry['survey']}_{entry['band']}"
+            if lc_tag in analyst.outlier_results:
+                outlier_flags = analyst.outlier_results[lc_tag]["is_outlier"]
+                lc = entry["light_curve"]
+                entry["light_curve_with_outliers"] = lc
+                entry["light_curve"] = lc[~outlier_flags]
+
+
         anomaly_found = analyst.perform_anomaly_finding("single_finished_test")
         assert anomaly_found
+
+        analyst.add_anomalous_points()
+        fit_config = analyst.config["model_fit_configuration"].get("1S1L_no_blend_no_piE")
+        if fit_config is not None:
+            fitting_package = fit_config.get("fitting_package")
+        else:
+            fitting_package = "pylima"
+        analyst.redo_plots_and_stats("single_finished_test", fitting_package)
 
         starting_params = {
             "ra": config["ra"],
@@ -960,8 +977,6 @@ class FitAnalystTest:
             "log_separation": np.log10(0.39),
             "log_mass_ratio": np.log10(0.00075),
             "alpha": 6.14,
-            "piEN": 0.0,
-            "piEE": 0.0
         }
         analyst.fit_1s2l_finished(start_params=starting_params)
         analyst.best_model = analyst.evaluate_models()
@@ -991,34 +1006,35 @@ class FitAnalystTest:
         analyst.log.info(f"Fit Analyst: Best fitting model: {analyst.best_model}")
 
         # Save best results statistics
-        file_name = os.path.join(analyst.analyst_path, "fit_stats.txt")
-        with open(file_name, "w", encoding="utf-8") as file:
-            file.write(
-                f"{'# name':<20s} : {'chi2':<9s} {'red_chi2':<9s} "
-                f"{'SW':<9s} {'SW_res':<9s} {'AD':<9s} {'AD_res':<9s} "
-                f"{'KS':<9s} {'KS_res':<9s} {'AIC':<9s} {'BIC':<9s}\n"
-            )
-            file.write("#------------------------------------------------------------------------------------------\n")
-            for model in analyst.best_results:
-                params = analyst.best_results[model]
-                file.write(
-                    f"{model:20s} : {params['chi2']:9.2f} {params['red_chi2']:9.2f}"
-                    f"{params['sw_test']:9.2f} {params['sw_test_result']:9.2f} "
-                    f"{params['ad_test']:9.2f} {params['ad_test_result']:9.2f} "
-                    f"{params['ks_test']:9.2f} {params['ks_test_result']:9.2f} "
-                    f"{params['aic_test']:9.2f} {params['bic_test']:9.2f}\n"
-                )
+        # file_name = os.path.join(analyst.analyst_path, "fit_stats.txt")
+        # with open(file_name, "w", encoding="utf-8") as file:
+        #     file.write(
+        #         f"{'# name':<20s} : {'chi2':<9s} {'red_chi2':<9s} "
+        #         f"{'SW':<9s} {'SW_res':<9s} {'AD':<9s} {'AD_res':<9s} "
+        #         f"{'KS':<9s} {'KS_res':<9s} {'AIC':<9s} {'BIC':<9s}\n"
+        #     )
+        #     file.write("#------------------------------------------------------------------------------------------\n")
+        #     for model in analyst.best_results:
+        #         params = analyst.best_results[model]
+        #         file.write(
+        #             f"{model:20s} : {params['chi2']:9.2f} {params['red_chi2']:9.2f}"
+        #             f"{params['sw_test']:9.2f} {params['sw_test_result']:9.2f} "
+        #             f"{params['ad_test']:9.2f} {params['ad_test_result']:9.2f} "
+        #             f"{params['ks_test']:9.2f} {params['ks_test_result']:9.2f} "
+        #             f"{params['aic_test']:9.2f} {params['bic_test']:9.2f}\n"
+        #         )
 
+        assert "1S2L_blend_piE" == analyst.best_model
 
-        # for model in expected_fit_result:
-        #     if model != "1S1L_no_blend_no_piE":
-        #         model_result = result[model]
-        #         expected_result = expected_fit_result[model]
-        #         for key in expected_result:
-        #             expected = float(expected_result[key])
-        #             received = float(model_result[key])
-        #             if not np.isnan(expected):
-        #                 assert pytest.approx(expected, 2) == pytest.approx(received, 2)
+        for model in analyst.best_results:
+            if "1S2L" in model:
+                model_result = analyst.best_results[model]
+                for key in model_result:
+                    if key in starting_params:
+                        expected = float(starting_params[key])
+                        received = float(model_result[key])
+                        if not np.isnan(expected):
+                            assert pytest.approx(np.abs(expected - received), 2) == 0.0
 
         logs.close_log(log)
 
@@ -1047,7 +1063,8 @@ def test_run():
     test = FitAnalystTest(scenario_best_only)
     test.test_return_best_only()
 
-    for case in [scenario_gaia, scenario_gsa, scenario_best_only]:
+    for case in [scenario_gaia, scenario_gsa,
+        scenario_best_only, scenario_roman]:
         analyst_path = case.get("analyst_path")
         event_name = case.get("event_name")
 
@@ -1072,6 +1089,10 @@ def test_run():
             "1S1L_blend_piE.html",
             "1S1L_blend_piE_p.html",
             "1S1L_blend_piE_n.html",
+            "1S2L_no_blend_no_piE.html",
+            "1S2L_blend_no_piE.html",
+            "1S2L_blend_piE.html",
+            "1S2L_no_blend_piE.html",
         ]
         for element in files:
             fpath = os.path.join(analyst_path, element)

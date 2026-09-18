@@ -845,7 +845,7 @@ class FitAnalystTest:
         if af_config is not None:
             for entry in af_config:
                 param = af_config[entry]
-                if type(param) == dict:
+                if type(param) == dict:  # noqa: E721
                     for key in param:
                         assert model_params[entry][key] == param.get(key)
                 else:
@@ -896,7 +896,7 @@ class FitAnalystTest:
                     expected = float(expected_result[key])
                     received = float(model_result[key])
                     if not np.isnan(expected):
-                        assert pytest.approx(expected, 2) == pytest.approx(received, 2)
+                        assert pytest.approx(np.abs(expected - received), 2) == 0.0
 
         logs.close_log(log)
 
@@ -961,10 +961,7 @@ class FitAnalystTest:
 
         analyst.add_anomalous_points()
         fit_config = analyst.config["model_fit_configuration"].get("1S1L_no_blend_no_piE")
-        if fit_config is not None:
-            fitting_package = fit_config.get("fitting_package")
-        else:
-            fitting_package = "pylima"
+        fitting_package = fit_config.get("fitting_package") if fit_config is not None else "pylima"
         analyst.redo_plots_and_stats("single_finished_test", fitting_package)
 
         starting_params = {
@@ -983,7 +980,7 @@ class FitAnalystTest:
         if analyst.config.get("anomaly_finder", None) is not None:
             anomaly_found = analyst.perform_anomaly_finding("multiple_finished")
             if anomaly_found:
-                analyst.log.debug(f"Anomaly found. Pass relevant information to somewhere.")
+                analyst.log.debug("Anomaly found. Pass relevant information to somewhere.")
 
         analyst.log.debug("Fit Analyst: Best models:")
         for model in analyst.best_results:

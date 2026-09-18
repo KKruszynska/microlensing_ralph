@@ -68,7 +68,8 @@ class Controller:
                 self.config["log_location"],
                 self.config["log_level"],
                 event_name=None,
-                stream=self.config["log_stream"]
+                to_file=True,
+                to_stream=self.config["log_stream"]
             )
 
             self.log.info("Processing started. Opened log.")

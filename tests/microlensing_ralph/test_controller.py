@@ -77,16 +77,16 @@ class ControllerTest:
 
             if event == "AT2024kwu":
                 model_plots = [
-                    "PSPL_no_blend_no_piE",
-                    "PSPL_blend_no_piE",
-                    "PSPL_blend_piE",
+                    "1S1L_no_blend_no_piE",
+                    "1S1L_blend_no_piE",
+                    "1S1L_blend_piE",
                 ]
             else:
                 model_plots = [
-                    "PSPL_no_blend_no_piE",
-                    "PSPL_blend_no_piE",
-                    "PSPL_blend_piE_p",
-                    "PSPL_blend_piE_n",
+                    "1S1L_no_blend_no_piE",
+                    "1S1L_blend_no_piE",
+                    "1S1L_blend_piE_p",
+                    "1S1L_blend_piE_n",
                 ]
 
             for file_path in model_plots:
@@ -182,14 +182,14 @@ def test_run():
             os.remove(output)
 
         model_plots = [
-            "PSPL_no_blend_no_piE",
-            "PSPL_blend_no_piE",
-            "PSPL_blend_piE",
-            "PSPL_blend_piE_p",
-            "PSPL_blend_piE_n",
-            "PSPL_no_blend_piE",
-            "PSPL_no_blend_piE_p",
-            "PSPL_no_blend_piE_n"
+            "1S1L_no_blend_no_piE",
+            "1S1L_blend_no_piE",
+            "1S1L_blend_piE",
+            "1S1L_blend_piE_p",
+            "1S1L_blend_piE_n",
+            "1S1L_no_blend_piE",
+            "1S1L_no_blend_piE_p",
+            "1S1L_no_blend_piE_n"
         ]
 
         for file_path in model_plots:

@@ -1090,9 +1090,18 @@ def test_run():
             "1S2L_blend_no_piE.html",
             "1S2L_blend_piE.html",
             "1S2L_no_blend_piE.html",
+            "1S2L_no_blend_no_piE_TRF_samples.npz",
+            "1S2L_blend_no_piE_TRF_samples.npz",
+            "1S2L_blend_piE_TRF_samples.npz",
+            "1S2L_no_blend_piE_TRF_samples.npz",
+            "af_results.npz",
+            "af_sequences.json",
+            "af_results_multiple_finished_Roman_W149.html",
+            "af_results_single_finished_test_Roman_W149.html",
         ]
         for element in files:
             fpath = os.path.join(analyst_path, element)
             output = Path(fpath)
             if output.exists():
                 os.remove(output)
+

@@ -76,9 +76,8 @@ class LightCurveAnalyst(BaseAnalyst):
                 as an outlier.
             See: :meth:`microlensing_ralph.analyst.light_curve_analyst.LightCurveAnalyst.hampel_filter`.
         File called `outlier_sequences.json` contains a JSON file with all sequences of consecutive
-        outliers found by :meth:`microlensing_ralph.analyst.light_curve_analyst.LightCurveAnalyst.vet_outliers`.
-
-        :microlensing_ralph.analyst.light_curve_analyst.LightCurveAnalyst.flag_invalid_mags:
+        outliers found by :meth:`microlensing_ralph.analyst.light_curve_analyst.LightCurveAnalyst.vet_outliers`
+        and :meth:`microlensing_ralph.analyst.light_curve_analyst.LightCurveAnalyst.flag_invalid_mags`
             Allowed models keywords are:
                 - `lower_limit` - lower limit of the acceptable magnitude range;
                 - `upper_limit` - upper limit of the acceptable magnitude range.
@@ -217,10 +216,10 @@ class LightCurveAnalyst(BaseAnalyst):
         custom_err_max = self.config["max_acceptable_err"]
         if custom_err_max is not None:
             mask_inv_err = np.where(
-                (light_curve[:, 2] < custom_err_max)
+                light_curve[:, 2] < custom_err_max
             )
         else:
-            mask_inv_err = np.where((light_curve[:, 2] < 1.0))
+            mask_inv_err = np.where(light_curve[:, 2] < 1.0)
 
         return mask_inv_err[0]
 
@@ -284,7 +283,7 @@ class LightCurveAnalyst(BaseAnalyst):
                     hampel_filter(lc)
                 )
 
-            self.log.debug(f"LC Analyst: Hampel filter to look for outliers for: {entry['survey']}_{entry['band']}.")
+            self.log.debug(f"LC Analyst: Hampel filter to look for outliers for: {entry['survey']}_{entry['band']}.")  # noqa: E501
 
             outlier_flags = self.outlier_results[f"{entry['survey']}_{entry['band']}"]["is_outlier"]
             self.outlier_seqs[f"{entry['survey']}_{entry['band']}"] = (
@@ -292,7 +291,7 @@ class LightCurveAnalyst(BaseAnalyst):
             )
             self.log.debug(f"LC Analyst: Outliers vetted for: {entry['survey']}_{entry['band']}.")
             self.log.info(
-                f"LC Analyst: Found {len(self.outlier_seqs)} outlier sequences for {entry['survey']}_{entry['band']}."
+                f"LC Analyst: Found {len(self.outlier_seqs)} outlier sequences for {entry['survey']}_{entry['band']}."  # noqa: E501
             )
 
         if self.config["save_outlier_results"]:
@@ -302,7 +301,7 @@ class LightCurveAnalyst(BaseAnalyst):
                 self.outlier_results,
             )
 
-            with open(os.path.join(self.analyst_path, "outlier_sequences.json"), "w", encoding="utf-8") as file:
+            with open(os.path.join(self.analyst_path, "outlier_sequences.json"), "w", encoding="utf-8") as file:  # noqa: E501
                 json.dump(self.outlier_seqs, file, ensure_ascii=False, indent=4)
 
             for entry in self.light_curves:
@@ -318,7 +317,7 @@ class LightCurveAnalyst(BaseAnalyst):
                     outlier_seqs,
                     to_mjd=self.config.get("to_MJD", False)
                 )
-            self.log.debug(f"LC Analyst: Outlier analysis results saved.")
+            self.log.debug("LC Analyst: Outlier analysis results saved.")
 
         self.log.info("LC Analyst: Outlier check ended.")
         return self.outlier_results, self.outlier_seqs

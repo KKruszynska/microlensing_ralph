@@ -313,8 +313,8 @@ scenario_roman = {
                 "save_results": True,
                 "to_MJD": True,
                 "af_setup": {
-                    "window": "7D",
-                    "n_sigma": 3.0,
+                    "window": "5D",
+                    "n_sigma": 2.0,
                     "use_weighted": True,
                 },
             },
@@ -404,11 +404,11 @@ scenario_roman = {
     },
     "answers": {
         "Roman_W149": {
-            "af_n_pts": 129,
-            "af_sequences": 2,
-            "longest_sequence": 84,
+            "af_n_pts": 1540,
+            "af_sequences": 70,
+            "longest_sequence": 28,
         },
-        "n_anomalous_points": 107,
+        "n_anomalous_points": 51,
         "n_returned_pts": 23,
     },
 }
@@ -430,8 +430,8 @@ class EventAnalystTest:
                 self.analyst_path,
                 "debug",
                 config_path=os.path.join(self.analyst_path, "config.yaml"),
-                log_to_file=False,
-                log_to_stream=True
+                log_to_file=True,
+                log_to_stream=False
             )
         else:
             scenario_config = self.scenario.get("config")
@@ -564,7 +564,7 @@ class EventAnalystTest:
 
         for entry in self.fit_analyst.light_curves:
             # extract np array with the light curve
-            lc_tag = f"{entry["survey"]}_{entry["band"]}"
+            lc_tag = f"{entry['survey']}_{entry['band']}"
             lc = np.array(entry["light_curve"])
             if lc_tag in self.fit_analyst.outlier_results:
                 outlier_flags =  self.fit_analyst.outlier_results[lc_tag]["is_outlier"]
@@ -574,7 +574,7 @@ class EventAnalystTest:
         self.fit_analyst.best_model = self.scenario.get("best_model")
         self.fit_analyst.best_results = self.scenario.get("best_results")
 
-        anomaly_found = self.fit_analyst.perform_anomaly_finding()
+        anomaly_found = self.fit_analyst.perform_anomaly_finding("single_finished")
 
         assert anomaly_found is True
 
@@ -602,7 +602,7 @@ class EventAnalystTest:
                 assert af_sequences == n_seqs
                 assert longest_sequence == l_seq
 
-                fpath = os.path.join(self.analyst_path, f"af_results_{entry}.html")
+                fpath = os.path.join(self.analyst_path, f"af_results_single_finished_{entry}.html")
                 output = Path(fpath)
                 assert output.exists() is True
                 assert output.is_file() is True
@@ -617,7 +617,7 @@ class EventAnalystTest:
         old_lc_lengths = {}
         if self.fit_analyst.outlier_results is not None:
             for entry in self.fit_analyst.light_curves:
-                lc_tag = f"{entry["survey"]}_{entry["band"]}"
+                lc_tag = f"{entry['survey']}_{entry['band']}"
                 old_lc_lengths[lc_tag] = len(entry["light_curve"])
 
         self.fit_analyst.add_anomalous_points()
@@ -625,7 +625,7 @@ class EventAnalystTest:
         new_lc_lengths = {}
         if self.fit_analyst.outlier_results is not None:
             for entry in self.fit_analyst.light_curves:
-                lc_tag = f"{entry["survey"]}_{entry["band"]}"
+                lc_tag = f"{entry['survey']}_{entry['band']}"
                 new_lc_lengths[lc_tag] = len(entry["light_curve"])
 
         answers = self.scenario.get("answers")
@@ -720,7 +720,7 @@ def test_run():
                     os.remove(output)
 
             for entry in scenario_roman["config"].get("light_curves"):
-                lc_tag = f"{entry["survey"]}_{entry["band"]}"
+                lc_tag = f"{entry['survey']}_{entry['band']}"
                 fpath = os.path.join(analyst_path, f"af_results_{lc_tag}.html")
                 output = Path(fpath)
                 if output.exists():

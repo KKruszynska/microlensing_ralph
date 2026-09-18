@@ -271,7 +271,7 @@ class LightCurveAnalyst(BaseAnalyst):
             # extract np array with the light curve
             lc = np.array(entry["light_curve"])
             if self.config["hampel"] is not None:
-                self.outlier_results[f"{entry["survey"]}_{entry["band"]}"] = (
+                self.outlier_results[f"{entry['survey']}_{entry['band']}"] = (
                     hampel_filter(
                         lc,
                         window=self.config["hampel"].get("window", "3D"),
@@ -280,19 +280,19 @@ class LightCurveAnalyst(BaseAnalyst):
                     )
                 )
             else:
-                self.outlier_results[f"{entry["survey"]}_{entry["band"]}"] = (
+                self.outlier_results[f"{entry['survey']}_{entry['band']}"] = (
                     hampel_filter(lc)
                 )
 
-            self.log.debug(f"LC Analyst: Hampel filter to look for outliers for: {entry["survey"]}_{entry["band"]}.")
+            self.log.debug(f"LC Analyst: Hampel filter to look for outliers for: {entry['survey']}_{entry['band']}.")
 
-            outlier_flags = self.outlier_results[f"{entry["survey"]}_{entry["band"]}"]["is_outlier"]
-            self.outlier_seqs[f"{entry["survey"]}_{entry["band"]}"] = (
+            outlier_flags = self.outlier_results[f"{entry['survey']}_{entry['band']}"]["is_outlier"]
+            self.outlier_seqs[f"{entry['survey']}_{entry['band']}"] = (
                 vet_outliers(lc, outlier_flags, self.log)
             )
-            self.log.debug(f"LC Analyst: Outliers vetted for: {entry["survey"]}_{entry["band"]}.")
+            self.log.debug(f"LC Analyst: Outliers vetted for: {entry['survey']}_{entry['band']}.")
             self.log.info(
-                f"LC Analyst: Found {len(self.outlier_seqs)} outlier sequences for {entry["survey"]}_{entry["band"]}."
+                f"LC Analyst: Found {len(self.outlier_seqs)} outlier sequences for {entry['survey']}_{entry['band']}."
             )
 
         if self.config["save_outlier_results"]:
@@ -306,15 +306,13 @@ class LightCurveAnalyst(BaseAnalyst):
                 json.dump(self.outlier_seqs, file, ensure_ascii=False, indent=4)
 
             for entry in self.light_curves:
-                print("====================")
-                print(self.config)
                 lc = np.array(entry["light_curve"])
-                outlier_res = self.outlier_results[f"{entry["survey"]}_{entry["band"]}"]
-                outlier_seqs = self.outlier_seqs[f"{entry["survey"]}_{entry["band"]}"]
-                output_fname = f"outlier_results_{entry["survey"]}_{entry["band"]}.html"
+                outlier_res = self.outlier_results[f"{entry['survey']}_{entry['band']}"]
+                outlier_seqs = self.outlier_seqs[f"{entry['survey']}_{entry['band']}"]
+                output_fname = f"outlier_results_{entry['survey']}_{entry['band']}.html"
                 plot_outlier_results(
                     os.path.join(self.analyst_path, output_fname),
-                    f"Outliers found for {entry["survey"]}_{entry["band"]}",
+                    f"Outliers found for {entry['survey']}_{entry['band']}",
                     lc,
                     outlier_res,
                     outlier_seqs,

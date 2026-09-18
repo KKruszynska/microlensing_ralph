@@ -377,7 +377,8 @@ class EventAnalyst(BaseAnalyst):
 
 if __name__ == "__main__":
     log_level = ""
-    stream = False
+    to_stream = False
+    to_file = True
     event = ""
     analyst_path = ""
     config_path = ""
@@ -405,14 +406,24 @@ if __name__ == "__main__":
         error = True
         error_string += "Event Analyst: Error! Missing log level information!\n"
 
-    if "--stream" in sys.argv:
-        idx = sys.argv.index("--stream")
-        stream = True if sys.argv[idx + 1] == "True" else False
+    if "--to_stream" in sys.argv:
+        idx = sys.argv.index("--to_stream")
+        to_stream = True if sys.argv[idx + 1] == "True" else False
+
+    if "--to_file" in sys.argv:
+        idx = sys.argv.index("--to_file")
+        to_file = True if sys.argv[idx + 1] == "True" else False
+
 
     if "--config_path" in sys.argv:
         idx = sys.argv.index("--config_path")
         config_path += sys.argv[idx + 1]
-        event_analyst = EventAnalyst(event, analyst_path, log_level, config_path=config_path, stream=stream)
+        event_analyst = EventAnalyst(
+            event, analyst_path, log_level,
+            config_path=config_path,
+            log_to_stream=to_stream,
+            log_to_file=to_file
+        )
     elif "--config_dict" in sys.argv:
         idx = sys.argv.index("--config_dict")
         config = json.loads(sys.argv[idx + 1])
@@ -423,7 +434,11 @@ if __name__ == "__main__":
 
     if error:
         if (len(log_level) > 0) and (len(analyst_path) > 0):
-            log = logs.start_log(analyst_path, log_level, event_name=event, stream=stream)
+            log = logs.start_log(analyst_path, log_level,
+                                 event_name=event,
+                                 to_stream=to_stream,
+                                 to_file=to_file
+                                 )
             log.error("Event Analyst: Error encountered while running an Event Analyst.\n")
             log.error(error_string)
             logs.close_log(log)
